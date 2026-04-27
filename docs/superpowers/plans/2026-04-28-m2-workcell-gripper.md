@@ -335,6 +335,7 @@ def test_cell_xacro_contains_documented_gripper_frames():
     links = {link.attrib["name"] for link in root.findall("link")}
     joints = {joint.attrib["name"] for joint in root.findall("joint")}
 
+    assert root.attrib["name"] == "crx10ia_l"
     assert "tool_link" in links
     assert "gripper_palm" in links
     assert "left_finger" in links
@@ -350,6 +351,16 @@ def test_cell_xacro_contains_documented_gripper_frames():
     grasp_origin = _joint_origin(root, "tool_link_to_grasp_link")
     assert grasp_origin.attrib["xyz"] == "0.18 0 0"
     assert grasp_origin.attrib["rpy"] == "0 0 0"
+
+
+def test_gripper_fingers_are_forward_of_palm_collision():
+    root = _expanded_cell_urdf()
+
+    left_origin = _joint_origin(root, "tool_link_to_left_finger")
+    right_origin = _joint_origin(root, "tool_link_to_right_finger")
+
+    assert left_origin.attrib["xyz"] == "0.17 0.055 0"
+    assert right_origin.attrib["xyz"] == "0.17 -0.055 0"
 
 
 def test_cell_xacro_includes_ros2_control_for_mock_moveit_bringup():
@@ -444,7 +455,7 @@ For a pre-grasp pose, move along `-X` from `grasp_link`. For approach, move alon
 
 `crx10ial_gripper.fake_gripper` owns attached-object transitions:
 
-- `AttachObject("work_object")` removes `work_object` from the world and attaches it to `grasp_link`.
+- `AttachObject("work_object")` attaches the existing `work_object` world object by id to `grasp_link`; MoveIt removes it from the world as part of that attachment.
 - `DetachObject()` removes the attached object from `grasp_link` and restores it to the world at the configured mock object pose.
 
 Physical gripper IO and vendor-specific payload behavior are outside M2. The fake backend exposes the same service surface for subsequent hardware-specific nodes.
@@ -466,7 +477,7 @@ Replace `src/crx10ial_cell_description/urdf/crx10ial_cell.urdf.xacro` with:
 
 ```xml
 <?xml version="1.0"?>
-<robot name="crx10ial_cell" xmlns:xacro="http://wiki.ros.org/xacro">
+<robot name="crx10ia_l" xmlns:xacro="http://wiki.ros.org/xacro">
   <xacro:arg name="robot_ip" default="1.1.1.1"/>
   <xacro:arg name="rmi_port" default="16001"/>
   <xacro:arg name="stream_motion_port" default="60015"/>
@@ -574,7 +585,7 @@ Replace `src/crx10ial_cell_description/urdf/crx10ial_cell.urdf.xacro` with:
   </link>
   <joint name="tool_link_to_left_finger" type="fixed">
     <parent link="tool_link"/><child link="left_finger"/>
-    <origin xyz="0.14 0.055 0" rpy="0 0 0"/>
+    <origin xyz="0.17 0.055 0" rpy="0 0 0"/>
   </joint>
 
   <link name="right_finger">
@@ -590,7 +601,7 @@ Replace `src/crx10ial_cell_description/urdf/crx10ial_cell.urdf.xacro` with:
   </link>
   <joint name="tool_link_to_right_finger" type="fixed">
     <parent link="tool_link"/><child link="right_finger"/>
-    <origin xyz="0.14 -0.055 0" rpy="0 0 0"/>
+    <origin xyz="0.17 -0.055 0" rpy="0 0 0"/>
   </joint>
 
   <link name="grasp_link"/>
@@ -711,7 +722,7 @@ def test_rejects_invalid_width_force_and_command():
         backend.command(99, width_m=0.02, force_n=1.0)
 
 
-def test_attach_scene_diff_removes_world_object_and_attaches_to_grasp_link():
+def test_attach_scene_diff_attaches_to_grasp_link_without_explicit_world_remove():
     backend = FakeGripperBackend()
 
     scene = backend.attach_object("work_object")
@@ -720,9 +731,7 @@ def test_attach_scene_diff_removes_world_object_and_attaches_to_grasp_link():
     assert backend.state.state == GRIPPER_STATE_HOLDING
     assert scene.is_diff is True
     assert scene.robot_state.is_diff is True
-    assert len(scene.world.collision_objects) == 1
-    assert scene.world.collision_objects[0].id == "work_object"
-    assert scene.world.collision_objects[0].operation == CollisionObject.REMOVE
+    assert len(scene.world.collision_objects) == 0
 
     attached = scene.robot_state.attached_collision_objects[0]
     assert attached.link_name == "grasp_link"
@@ -1004,10 +1013,6 @@ class FakeGripperBackend:
         scene.is_diff = True
         scene.robot_state.is_diff = True
 
-        scene.world.collision_objects.append(
-            _collision_object_remove(spec.object_id, self.world_frame)
-        )
-
         attached = AttachedCollisionObject()
         attached.link_name = self.attach_link
         attached.touch_links = list(self.touch_links)
@@ -1193,6 +1198,28 @@ def test_attach_callback_returns_failure_for_unknown_object():
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
+
+def test_attach_callback_rolls_back_state_when_apply_scene_fails():
+    _init_rclpy()
+    node = FakeGripperNode(start_apply_scene_client=False)
+
+    def fail_apply_scene(scene):
+        raise RuntimeError("apply failed")
+
+    node.apply_scene = fail_apply_scene
+    try:
+        request = AttachObject.Request()
+        request.object_id = "work_object"
+        response = node.handle_attach_object(request, AttachObject.Response())
+
+        assert response.success is False
+        assert "apply failed" in response.message
+        assert response.attached_object_id == ""
+        assert node.backend.state.attached_object_id == ""
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 ```
 
 - [ ] **Step 2: Run node tests and verify they fail**
@@ -1220,7 +1247,11 @@ from rclpy.executors import MultiThreadedExecutor
 from moveit_msgs.srv import ApplyPlanningScene
 from rclpy.node import Node
 
-from crx10ial_gripper.fake_gripper import FakeGripperBackend
+from crx10ial_gripper.fake_gripper import (
+    FakeGripperBackend,
+    GRIPPER_STATE_HOLDING,
+    GRIPPER_STATE_OPEN,
+)
 from crx10ial_interfaces.srv import (
     AttachObject,
     CommandGripper,
@@ -1302,6 +1333,9 @@ class FakeGripperNode(Node):
             scene = self.backend.attach_object(request.object_id)
             self.apply_scene(scene)
         except (RuntimeError, ValueError) as exc:
+            self.backend.state.attached_object_id = ""
+            if self.backend.state.state == GRIPPER_STATE_HOLDING:
+                self.backend.state.state = GRIPPER_STATE_OPEN
             response.success = False
             response.message = str(exc)
             response.attached_object_id = self.backend.state.attached_object_id
@@ -1865,15 +1899,17 @@ cleanup() {
 trap cleanup EXIT
 
 for _ in $(seq 1 60); do
-  if ros2 service list | grep -qx "/plan_kinematic_path" && \
-     ros2 service list | grep -qx "/check_state_validity"; then
+  ros2 service list > /tmp/crx10ial_m2_scene_services.txt
+  if grep -Fxq "/plan_kinematic_path" /tmp/crx10ial_m2_scene_services.txt && \
+     grep -Fxq "/check_state_validity" /tmp/crx10ial_m2_scene_services.txt; then
     break
   fi
   sleep 1
 done
 
-ros2 service list | grep -qx "/plan_kinematic_path"
-ros2 service list | grep -qx "/check_state_validity"
+ros2 service list > /tmp/crx10ial_m2_scene_services.txt
+grep -Fxq "/plan_kinematic_path" /tmp/crx10ial_m2_scene_services.txt
+grep -Fxq "/check_state_validity" /tmp/crx10ial_m2_scene_services.txt
 sleep 10
 
 python3 - <<'PY' | tee /tmp/crx10ial_m2_scene_plan_check.log
@@ -2031,19 +2067,25 @@ cleanup() {
 trap cleanup EXIT
 
 for _ in $(seq 1 60); do
-  if ros2 service list | grep -qx "/crx10ial_gripper/command" && \
-     ros2 service list | grep -qx "/crx10ial_gripper/attach_object" && \
-     ros2 service list | grep -qx "/crx10ial_gripper/detach_object" && \
-     ros2 service list | grep -qx "/crx10ial_gripper/get_state"; then
+  ros2 service list > /tmp/crx10ial_m2_gripper_services.txt
+  if grep -Fxq "/crx10ial_gripper/command" /tmp/crx10ial_m2_gripper_services.txt && \
+     grep -Fxq "/crx10ial_gripper/attach_object" /tmp/crx10ial_m2_gripper_services.txt && \
+     grep -Fxq "/crx10ial_gripper/detach_object" /tmp/crx10ial_m2_gripper_services.txt && \
+     grep -Fxq "/crx10ial_gripper/get_state" /tmp/crx10ial_m2_gripper_services.txt && \
+     grep -Fxq "/apply_planning_scene" /tmp/crx10ial_m2_gripper_services.txt; then
     break
   fi
   sleep 1
 done
 
-ros2 service list | grep -qx "/crx10ial_gripper/command"
-ros2 service list | grep -qx "/crx10ial_gripper/attach_object"
-ros2 service list | grep -qx "/crx10ial_gripper/detach_object"
-ros2 service list | grep -qx "/crx10ial_gripper/get_state"
+ros2 service list > /tmp/crx10ial_m2_gripper_services.txt
+grep -Fxq "/crx10ial_gripper/command" /tmp/crx10ial_m2_gripper_services.txt
+grep -Fxq "/crx10ial_gripper/attach_object" /tmp/crx10ial_m2_gripper_services.txt
+grep -Fxq "/crx10ial_gripper/detach_object" /tmp/crx10ial_m2_gripper_services.txt
+grep -Fxq "/crx10ial_gripper/get_state" /tmp/crx10ial_m2_gripper_services.txt
+grep -Fxq "/apply_planning_scene" /tmp/crx10ial_m2_gripper_services.txt
+
+sleep 10
 
 ros2 service call /crx10ial_gripper/command crx10ial_interfaces/srv/CommandGripper \
   "{command: 1, width_m: 0.08, force_n: 0.0}" | tee /tmp/crx10ial_m2_open.log

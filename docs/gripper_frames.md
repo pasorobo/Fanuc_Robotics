@@ -34,7 +34,7 @@ For a pre-grasp pose, move along `-X` from `grasp_link`. For approach, move alon
 
 `crx10ial_gripper.fake_gripper` owns attached-object transitions:
 
-- `AttachObject("work_object")` removes `work_object` from the world and attaches it to `grasp_link`.
+- `AttachObject("work_object")` attaches the existing `work_object` world object by id to `grasp_link`; MoveIt removes it from the world as part of that attachment.
 - `DetachObject()` removes the attached object from `grasp_link` and restores it to the world at the configured mock object pose.
 
 Physical gripper IO and vendor-specific payload behavior are outside M2. The fake backend exposes the same service surface for later hardware-specific nodes.
