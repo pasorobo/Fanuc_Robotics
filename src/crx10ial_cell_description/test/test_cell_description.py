@@ -122,6 +122,16 @@ def test_cell_xacro_contains_documented_gripper_frames():
     assert grasp_origin.attrib["rpy"] == "0 0 0"
 
 
+def test_gripper_fingers_are_forward_of_palm_collision():
+    root = _expanded_cell_urdf()
+
+    left_origin = _joint_origin(root, "tool_link_to_left_finger")
+    right_origin = _joint_origin(root, "tool_link_to_right_finger")
+
+    assert left_origin.attrib["xyz"] == "0.17 0.055 0"
+    assert right_origin.attrib["xyz"] == "0.17 -0.055 0"
+
+
 def test_cell_xacro_includes_ros2_control_for_mock_moveit_bringup():
     root = _expanded_cell_urdf()
     ros2_control_names = {
