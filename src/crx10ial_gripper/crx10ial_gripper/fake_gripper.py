@@ -135,10 +135,6 @@ class FakeGripperBackend:
         scene.is_diff = True
         scene.robot_state.is_diff = True
 
-        scene.world.collision_objects.append(
-            _collision_object_remove(spec.object_id, self.world_frame)
-        )
-
         attached = AttachedCollisionObject()
         attached.link_name = self.attach_link
         attached.touch_links = list(self.touch_links)

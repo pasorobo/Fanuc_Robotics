@@ -6,7 +6,11 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from crx10ial_gripper.fake_gripper import FakeGripperBackend
+from crx10ial_gripper.fake_gripper import (
+    FakeGripperBackend,
+    GRIPPER_STATE_HOLDING,
+    GRIPPER_STATE_OPEN,
+)
 from crx10ial_interfaces.srv import (
     AttachObject,
     CommandGripper,
@@ -88,6 +92,9 @@ class FakeGripperNode(Node):
             scene = self.backend.attach_object(request.object_id)
             self.apply_scene(scene)
         except (RuntimeError, ValueError) as exc:
+            self.backend.state.attached_object_id = ""
+            if self.backend.state.state == GRIPPER_STATE_HOLDING:
+                self.backend.state.state = GRIPPER_STATE_OPEN
             response.success = False
             response.message = str(exc)
             response.attached_object_id = self.backend.state.attached_object_id

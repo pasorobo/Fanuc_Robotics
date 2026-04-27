@@ -53,7 +53,7 @@ def test_rejects_invalid_width_force_and_command():
         backend.command(99, width_m=0.02, force_n=1.0)
 
 
-def test_attach_scene_diff_removes_world_object_and_attaches_to_grasp_link():
+def test_attach_scene_diff_attaches_to_grasp_link_without_explicit_world_remove():
     backend = FakeGripperBackend()
 
     scene = backend.attach_object("work_object")
@@ -62,9 +62,7 @@ def test_attach_scene_diff_removes_world_object_and_attaches_to_grasp_link():
     assert backend.state.state == GRIPPER_STATE_HOLDING
     assert scene.is_diff is True
     assert scene.robot_state.is_diff is True
-    assert len(scene.world.collision_objects) == 1
-    assert scene.world.collision_objects[0].id == "work_object"
-    assert scene.world.collision_objects[0].operation == CollisionObject.REMOVE
+    assert len(scene.world.collision_objects) == 0
 
     attached = scene.robot_state.attached_collision_objects[0]
     assert attached.link_name == "grasp_link"

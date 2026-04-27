@@ -84,3 +84,25 @@ def test_attach_callback_returns_failure_for_unknown_object():
     finally:
         node.destroy_node()
         rclpy.shutdown()
+
+
+def test_attach_callback_rolls_back_state_when_apply_scene_fails():
+    _init_rclpy()
+    node = FakeGripperNode(start_apply_scene_client=False)
+
+    def fail_apply_scene(scene):
+        raise RuntimeError("apply failed")
+
+    node.apply_scene = fail_apply_scene
+    try:
+        request = AttachObject.Request()
+        request.object_id = "work_object"
+        response = node.handle_attach_object(request, AttachObject.Response())
+
+        assert response.success is False
+        assert "apply failed" in response.message
+        assert response.attached_object_id == ""
+        assert node.backend.state.attached_object_id == ""
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
