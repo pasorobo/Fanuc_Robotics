@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>crx10ial_bringup</name>
+  <version>0.1.0</version>
+  <description>Bringup launch files for the CRX-10iA/L workcell.</description>
+  <maintainer email="codex@openai.com">Fanuc Robotics Maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>fanuc_hardware_interface</exec_depend>
+  <exec_depend>fanuc_moveit_config</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>moveit_configs_utils</exec_depend>
+  <exec_depend>moveit_msgs</exec_depend>
+  <exec_depend>moveit_ros_move_group</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>shape_msgs</exec_depend>
+
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
