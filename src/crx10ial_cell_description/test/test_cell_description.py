@@ -42,6 +42,7 @@ def test_cell_xacro_expands_and_contains_static_workcell_links():
     links = {link.attrib["name"] for link in root.findall("link")}
     joints = {joint.attrib["name"] for joint in root.findall("joint")}
 
+    assert root.attrib["name"] == "crx10ia_l"
     assert "world" in links
     assert "base_link" in links
     assert "table" in links
