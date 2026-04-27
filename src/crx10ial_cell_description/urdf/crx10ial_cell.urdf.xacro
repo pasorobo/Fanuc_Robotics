@@ -1,6 +1,21 @@
 <?xml version="1.0"?>
 <robot name="crx10ial_cell" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:arg name="robot_ip" default="1.1.1.1"/>
+  <xacro:arg name="rmi_port" default="16001"/>
+  <xacro:arg name="stream_motion_port" default="60015"/>
+  <xacro:arg name="gpio_configuration" default=""/>
+  <xacro:arg name="payload_schedule" default="1"/>
+  <xacro:arg name="out_cmd_interp_buff_target" default="8"/>
+  <xacro:arg name="force_sensor_type" default="1"/>
+  <xacro:arg name="use_mock" default="true"/>
+
   <xacro:include filename="$(find fanuc_crx_description)/urdf/crx10ia_l_urdf_macro.xacro"/>
+  <xacro:if value="$(arg use_mock)">
+    <xacro:include filename="$(find fanuc_hardware_interface)/config/crx_mock_ros2_control_macro.xacro"/>
+  </xacro:if>
+  <xacro:unless value="$(arg use_mock)">
+    <xacro:include filename="$(find fanuc_hardware_interface)/config/crx_physical_ros2_control_macro.xacro"/>
+  </xacro:unless>
 
   <link name="world"/>
   <link name="end_effector"/>
@@ -57,19 +72,65 @@
     <origin xyz="0.35 -0.55 0.35" rpy="0 0 0"/>
   </joint>
 
-  <link name="tool_stub">
-    <visual>
-      <origin xyz="0 0 0.04" rpy="0 0 0"/>
-      <geometry><box size="0.08 0.08 0.08"/></geometry>
-      <material name="mat_tool_stub_green"><color rgba="0.15 0.55 0.25 1.0"/></material>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0.04" rpy="0 0 0"/>
-      <geometry><box size="0.08 0.08 0.08"/></geometry>
-    </collision>
-  </link>
-  <joint name="end_effector_to_tool_stub" type="fixed">
-    <parent link="end_effector"/><child link="tool_stub"/>
+  <link name="tool_link"/>
+  <joint name="end_effector_to_tool_link" type="fixed">
+    <parent link="end_effector"/><child link="tool_link"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
+
+  <link name="gripper_palm">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.08 0.10 0.08"/></geometry>
+      <material name="mat_gripper_palm_green"><color rgba="0.15 0.55 0.25 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.08 0.10 0.08"/></geometry>
+    </collision>
+  </link>
+  <joint name="tool_link_to_gripper_palm" type="fixed">
+    <parent link="tool_link"/><child link="gripper_palm"/>
+    <origin xyz="0.06 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="left_finger">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.02 0.04"/></geometry>
+      <material name="mat_gripper_finger_dark"><color rgba="0.08 0.08 0.08 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.02 0.04"/></geometry>
+    </collision>
+  </link>
+  <joint name="tool_link_to_left_finger" type="fixed">
+    <parent link="tool_link"/><child link="left_finger"/>
+    <origin xyz="0.14 0.055 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="right_finger">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.02 0.04"/></geometry>
+      <material name="mat_gripper_finger_dark"><color rgba="0.08 0.08 0.08 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.12 0.02 0.04"/></geometry>
+    </collision>
+  </link>
+  <joint name="tool_link_to_right_finger" type="fixed">
+    <parent link="tool_link"/><child link="right_finger"/>
+    <origin xyz="0.14 -0.055 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="grasp_link"/>
+  <joint name="tool_link_to_grasp_link" type="fixed">
+    <parent link="tool_link"/><child link="grasp_link"/>
+    <origin xyz="0.18 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:crx_control name="crx10ia_l"/>
 </robot>

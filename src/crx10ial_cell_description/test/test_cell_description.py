@@ -47,12 +47,20 @@ def test_cell_xacro_expands_and_contains_static_workcell_links():
     assert "table" in links
     assert "work_object" in links
     assert "camera_stand" in links
-    assert "tool_stub" in links
+    assert "tool_link" in links
+    assert "gripper_palm" in links
+    assert "left_finger" in links
+    assert "right_finger" in links
+    assert "grasp_link" in links
 
     assert "world_to_table" in joints
     assert "table_to_work_object" in joints
     assert "world_to_camera_stand" in joints
-    assert "end_effector_to_tool_stub" in joints
+    assert "end_effector_to_tool_link" in joints
+    assert "tool_link_to_gripper_palm" in joints
+    assert "tool_link_to_left_finger" in joints
+    assert "tool_link_to_right_finger" in joints
+    assert "tool_link_to_grasp_link" in joints
 
 
 def test_cell_urdf_has_single_root_and_valid_joint_references():
@@ -78,7 +86,49 @@ def test_cell_urdf_has_single_root_and_valid_joint_references():
         parent_child_pairs.add((parent, child))
 
     assert links - child_links == {"world"}
-    assert ("end_effector", "tool_stub") in parent_child_pairs
+    assert ("end_effector", "tool_link") in parent_child_pairs
+    assert ("tool_link", "grasp_link") in parent_child_pairs
+
+
+def _joint_origin(root: ET.Element, joint_name: str) -> ET.Element:
+    joint = next(
+        joint
+        for joint in root.findall("joint")
+        if joint.attrib["name"] == joint_name
+    )
+    return joint.find("origin")
+
+
+def test_cell_xacro_contains_documented_gripper_frames():
+    root = _expanded_cell_urdf()
+    links = {link.attrib["name"] for link in root.findall("link")}
+    joints = {joint.attrib["name"] for joint in root.findall("joint")}
+
+    assert "tool_link" in links
+    assert "gripper_palm" in links
+    assert "left_finger" in links
+    assert "right_finger" in links
+    assert "grasp_link" in links
+
+    assert "end_effector_to_tool_link" in joints
+    assert "tool_link_to_gripper_palm" in joints
+    assert "tool_link_to_left_finger" in joints
+    assert "tool_link_to_right_finger" in joints
+    assert "tool_link_to_grasp_link" in joints
+
+    grasp_origin = _joint_origin(root, "tool_link_to_grasp_link")
+    assert grasp_origin.attrib["xyz"] == "0.18 0 0"
+    assert grasp_origin.attrib["rpy"] == "0 0 0"
+
+
+def test_cell_xacro_includes_ros2_control_for_mock_moveit_bringup():
+    root = _expanded_cell_urdf()
+    ros2_control_names = {
+        control.attrib["name"]
+        for control in root.findall("ros2_control")
+    }
+
+    assert "crx10ia_l" in ros2_control_names
 
 
 def test_joint_state_publisher_gui_is_not_unconditional():
