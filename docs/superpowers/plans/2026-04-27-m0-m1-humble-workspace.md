@@ -2005,7 +2005,7 @@ set -euo pipefail
 
 rm -f /tmp/crx10ial_named_plan_launch.log /tmp/crx10ial_named_plan_check.log
 
-ros2 launch crx10ial_bringup mock.launch.py launch_rviz:=false publish_scene:=true \
+ros2 launch crx10ial_bringup mock.launch.py launch_rviz:=false publish_scene:=false \
   > /tmp/crx10ial_named_plan_launch.log 2>&1 &
 LAUNCH_PID=$!
 
@@ -2123,6 +2123,7 @@ trap - EXIT
 Expected:
 
 - `/plan_kinematic_path` becomes available.
+- `publish_scene:=false` keeps this check focused on joint-space planning to the named state; Step 6 already covers `publish_scene:=true` startup.
 - Python prints `Motion planning succeeded for SRDF named state default`.
 - `Trajectory points:` is greater than `0`.
 - launch logs contain no Python traceback or package-not-found error.
