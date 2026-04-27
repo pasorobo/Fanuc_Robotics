@@ -72,3 +72,42 @@ def test_validate_publish_period_rejects_non_positive_or_non_finite_values():
 
 def test_validate_publish_period_accepts_positive_finite_value():
     assert validate_publish_period(2.0) == 2.0
+
+
+import ast
+from pathlib import Path
+
+
+def _mock_launch_source_tree() -> ast.AST:
+    launch_path = Path(__file__).parents[1] / "launch" / "mock.launch.py"
+    return ast.parse(launch_path.read_text(encoding="utf-8"))
+
+
+def test_mock_launch_uses_local_cell_description_xacro():
+    tree = _mock_launch_source_tree()
+    constants = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+
+    assert "crx10ial_cell_description" in constants
+    assert "crx10ial_cell.urdf.xacro" in constants
+
+
+def test_mock_launch_starts_robot_state_publisher_and_fake_gripper():
+    tree = _mock_launch_source_tree()
+    node_packages = []
+    node_executables = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or getattr(node.func, "id", None) != "Node":
+            continue
+        for keyword in node.keywords:
+            if keyword.arg == "package" and isinstance(keyword.value, ast.Constant):
+                node_packages.append(keyword.value.value)
+            if keyword.arg == "executable" and isinstance(keyword.value, ast.Constant):
+                node_executables.append(keyword.value.value)
+
+    assert "robot_state_publisher" in node_packages
+    assert "crx10ial_gripper" in node_packages
+    assert "fake_gripper" in node_executables

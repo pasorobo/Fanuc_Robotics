@@ -2,20 +2,54 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, OpaqueFunction
 from launch.conditions import IfCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from moveit_configs_utils import MoveItConfigsBuilder
 
 
+def _robot_description_command(cell_xacro_path, description_arguments):
+    return Command(
+        [
+            PathJoinSubstitution([FindExecutable(name="xacro")]),
+            " ",
+            cell_xacro_path,
+            " ",
+            "robot_ip:=",
+            description_arguments["robot_ip"],
+            " ",
+            "use_mock:=",
+            description_arguments["use_mock"],
+            " ",
+            "gpio_configuration:=",
+            description_arguments["gpio_configuration"],
+            " ",
+        ]
+    )
+
+
+def _controller_spawner(controller_name):
+    return ExecuteProcess(
+        cmd=[
+            "ros2 run controller_manager spawner "
+            f"--controller-manager-timeout 180 {controller_name}"
+        ],
+        shell=True,
+        output="screen",
+    )
+
+
 def launch_setup(context, *args, **kwargs):
+    del args, kwargs
+
     robot_model = LaunchConfiguration("robot_model")
     robot_ip = LaunchConfiguration("robot_ip")
     launch_rviz = LaunchConfiguration("launch_rviz")
     publish_scene = LaunchConfiguration("publish_scene")
+    launch_gripper = LaunchConfiguration("launch_gripper")
     ros2_control_config = LaunchConfiguration("ros2_control_config")
     gpio_configuration = LaunchConfiguration("gpio_configuration")
 
@@ -26,15 +60,26 @@ def launch_setup(context, *args, **kwargs):
         "gpio_configuration": gpio_configuration.perform(context),
     }
 
-    urdf_full_path = os.path.join(
-        get_package_share_directory("fanuc_hardware_interface"),
-        "robot",
-        f"{robot_model_value}.urdf.xacro",
+    cell_xacro_path = os.path.join(
+        get_package_share_directory("crx10ial_cell_description"),
+        "urdf",
+        "crx10ial_cell.urdf.xacro",
     )
+
+    robot_description_content = _robot_description_command(
+        cell_xacro_path,
+        description_arguments,
+    )
+    robot_description = {
+        "robot_description": ParameterValue(
+            value=robot_description_content,
+            value_type=str,
+        )
+    }
 
     moveit_config = (
         MoveItConfigsBuilder(robot_model_value, package_name="fanuc_moveit_config")
-        .robot_description(file_path=urdf_full_path, mappings=description_arguments)
+        .robot_description(file_path=cell_xacro_path, mappings=description_arguments)
         .robot_description_semantic(file_path=f"srdf/{robot_model_value}.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .planning_scene_monitor(
@@ -45,24 +90,28 @@ def launch_setup(context, *args, **kwargs):
         .to_moveit_configs()
     )
 
-    mock_control = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("fanuc_hardware_interface"),
-                    "launch",
-                    "fanuc_mock_control.launch.py",
-                ]
-            )
-        ),
-        # Mirrors FANUC's upstream MoveIt mock-control include for CRX robots.
-        launch_arguments={
-            "robot_model": robot_model,
-            "robot_series": "crx",
-            "gpio_configuration": gpio_configuration,
-            "ros2_control_config": ros2_control_config,
-            "launch_rviz": "false",
-        }.items(),
+    # The cell xacro already expands FANUC's ros2_control macro. Start the same
+    # mock control nodes as FANUC upstream here so MoveIt and ros2_control share
+    # this single robot_description instead of expanding two independent URDFs.
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_description, ros2_control_config],
+        output="both",
+    )
+
+    robot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        output="both",
+        parameters=[robot_description],
+    )
+
+    slider = Node(
+        package="slider_publisher",
+        executable="slider_gui_node",
+        name="slider_gui_node",
+        output="both",
     )
 
     move_group = Node(
@@ -100,7 +149,30 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(publish_scene),
     )
 
-    return [mock_control, move_group, rviz, scene_publisher]
+    fake_gripper = Node(
+        package="crx10ial_gripper",
+        executable="fake_gripper",
+        namespace="crx10ial_gripper",
+        name="fake_gripper",
+        output="both",
+        parameters=[{"attach_link": "grasp_link", "world_frame": "world"}],
+        condition=IfCondition(launch_gripper),
+    )
+
+    return [
+        control_node,
+        robot_state_publisher,
+        slider,
+        _controller_spawner("joint_state_broadcaster"),
+        _controller_spawner("joint_trajectory_controller"),
+        _controller_spawner("fanuc_gpio_controller"),
+        _controller_spawner("fanuc_force_sensor_broadcaster"),
+        _controller_spawner("force_torque_sensor_broadcaster"),
+        move_group,
+        rviz,
+        scene_publisher,
+        fake_gripper,
+    ]
 
 
 def generate_launch_description():
@@ -128,6 +200,12 @@ def generate_launch_description():
                 default_value="true",
                 choices=["true", "false"],
                 description="Publish static planning-scene collision objects.",
+            ),
+            DeclareLaunchArgument(
+                "launch_gripper",
+                default_value="true",
+                choices=["true", "false"],
+                description="Start the fake gripper service node.",
             ),
             DeclareLaunchArgument(
                 "ros2_control_config",
