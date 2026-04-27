@@ -20,6 +20,10 @@ if [ -d src/fanuc_driver/.git ]; then
 fi
 
 if [ -d src/fanuc_description/.git ]; then
-  git -C src/fanuc_description lfs install --local
-  git -C src/fanuc_description lfs pull
+  if git -C src/fanuc_description lfs version >/dev/null 2>&1; then
+    git -C src/fanuc_description lfs install --local
+    git -C src/fanuc_description lfs pull
+  else
+    echo "git-lfs is not installed; skipping FANUC mesh LFS download." >&2
+  fi
 fi
