@@ -226,6 +226,16 @@ assert "robot_model" in mock_launch
 assert "robot_series" in mock_launch
 assert '<group name="manipulator">' in srdf
 assert '<chain base_link="base_link" tip_link="flange"/>' in srdf
+assert '<group_state name="default" group="manipulator">' in srdf
+for expected_joint in [
+    '<joint name="J1" value="0"/>',
+    '<joint name="J2" value="0"/>',
+    '<joint name="J3" value="0"/>',
+    '<joint name="J4" value="0"/>',
+    '<joint name="J5" value="-1.5708"/>',
+    '<joint name="J6" value="0"/>',
+]:
+    assert expected_joint in srdf
 print("fanuc mock and MoveIt files ok")
 PY
 ```
@@ -1984,7 +1994,140 @@ grep -E "move_group|mock_scene_publisher|joint_state_broadcaster|joint_trajector
 
 Expected: timeout status is `124`, no error pattern appears, and expected launch components appear in logs.
 
-- [ ] **Step 7: Check Git state**
+- [ ] **Step 7: Verify named-state joint-space planning through MoveIt**
+
+Run:
+
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+set -euo pipefail
+
+rm -f /tmp/crx10ial_named_plan_launch.log /tmp/crx10ial_named_plan_check.log
+
+ros2 launch crx10ial_bringup mock.launch.py launch_rviz:=false publish_scene:=true \
+  > /tmp/crx10ial_named_plan_launch.log 2>&1 &
+LAUNCH_PID=$!
+
+cleanup() {
+  if kill -0 "${LAUNCH_PID}" >/dev/null 2>&1; then
+    kill "${LAUNCH_PID}" >/dev/null 2>&1 || true
+    wait "${LAUNCH_PID}" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup EXIT
+
+for _ in $(seq 1 60); do
+  if ros2 service list | grep -qx "/plan_kinematic_path"; then
+    break
+  fi
+  sleep 1
+done
+
+ros2 service list | grep -qx "/plan_kinematic_path"
+sleep 10
+
+python3 - <<'PY' | tee /tmp/crx10ial_named_plan_check.log
+import sys
+
+import rclpy
+from moveit_msgs.msg import Constraints, JointConstraint, MoveItErrorCodes
+from moveit_msgs.srv import GetMotionPlan
+
+
+SRDF_DEFAULT_NAMED_STATE = {
+    "J1": 0.0,
+    "J2": 0.0,
+    "J3": 0.0,
+    "J4": 0.0,
+    "J5": -1.5708,
+    "J6": 0.0,
+}
+
+
+def build_request() -> GetMotionPlan.Request:
+    request = GetMotionPlan.Request()
+    motion_request = request.motion_plan_request
+    motion_request.group_name = "manipulator"
+    motion_request.num_planning_attempts = 5
+    motion_request.allowed_planning_time = 5.0
+    motion_request.max_velocity_scaling_factor = 0.1
+    motion_request.max_acceleration_scaling_factor = 0.1
+    motion_request.start_state.is_diff = True
+
+    goal = Constraints()
+    goal.name = "srdf_default_named_state"
+
+    for joint_name, joint_value in SRDF_DEFAULT_NAMED_STATE.items():
+        constraint = JointConstraint()
+        constraint.joint_name = joint_name
+        constraint.position = joint_value
+        constraint.tolerance_above = 0.01
+        constraint.tolerance_below = 0.01
+        constraint.weight = 1.0
+        goal.joint_constraints.append(constraint)
+
+    motion_request.goal_constraints.append(goal)
+    return request
+
+
+def main() -> int:
+    rclpy.init()
+    node = rclpy.create_node("check_crx10ial_named_state_plan")
+    try:
+        client = node.create_client(GetMotionPlan, "/plan_kinematic_path")
+        if not client.wait_for_service(timeout_sec=30.0):
+            print("ERROR: /plan_kinematic_path service did not become available", file=sys.stderr)
+            return 1
+
+        future = client.call_async(build_request())
+        rclpy.spin_until_future_complete(node, future, timeout_sec=30.0)
+
+        if not future.done():
+            print("ERROR: planning service call timed out", file=sys.stderr)
+            return 1
+
+        response = future.result()
+        if response is None:
+            print("ERROR: planning service returned no response", file=sys.stderr)
+            return 1
+
+        error_code = response.motion_plan_response.error_code.val
+        if error_code != MoveItErrorCodes.SUCCESS:
+            print(f"ERROR: expected MoveIt SUCCESS=1, got {error_code}", file=sys.stderr)
+            return 1
+
+        points = response.motion_plan_response.trajectory.joint_trajectory.points
+        if not points:
+            print("ERROR: planning response trajectory has no points", file=sys.stderr)
+            return 1
+
+        print("Motion planning succeeded for SRDF named state default")
+        print(f"Trajectory points: {len(points)}")
+        return 0
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+raise SystemExit(main())
+PY
+
+grep -q "Motion planning succeeded for SRDF named state default" /tmp/crx10ial_named_plan_check.log
+! grep -E "Traceback|Exception|ModuleNotFoundError|PackageNotFoundError" /tmp/crx10ial_named_plan_launch.log
+
+cleanup
+trap - EXIT
+```
+
+Expected:
+
+- `/plan_kinematic_path` becomes available.
+- Python prints `Motion planning succeeded for SRDF named state default`.
+- `Trajectory points:` is greater than `0`.
+- launch logs contain no Python traceback or package-not-found error.
+
+- [ ] **Step 8: Check Git state**
 
 Run:
 
@@ -2009,5 +2152,5 @@ or a clean branch status with no untracked or modified files.
 - M1 workcell xacro and RViz visualization are covered by Task 4.
 - M1 static planning scene collision objects are covered by Task 5.
 - M1 mock MoveIt launch is covered by Task 6.
-- M0/M1 build, test, xacro, and launch checks are covered by Task 7.
+- M0/M1 build, test, xacro, launch, and named-state planning checks are covered by Task 7.
 - Hardware, ROBOGUIDE, Gazebo, iRVision, task construction, and physical gripper behavior are excluded from this plan by scope.
