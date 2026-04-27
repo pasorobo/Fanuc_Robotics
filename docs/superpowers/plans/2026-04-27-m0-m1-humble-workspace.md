@@ -302,6 +302,8 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+src/fanuc_description/
+src/fanuc_driver/
 ```
 
 - [ ] **Step 3: Create `third_party.humble.repos`**

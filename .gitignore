@@ -10,3 +10,5 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+src/fanuc_description/
+src/fanuc_driver/
