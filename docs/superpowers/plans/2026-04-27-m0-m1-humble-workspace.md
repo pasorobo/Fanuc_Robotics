@@ -78,6 +78,171 @@ Responsibilities:
 - `crx10ial_bringup` owns the mock MoveIt launch and static collision publisher used by the M1 demo.
 - Other `crx10ial_*` packages are minimal ROS 2 packages that reserve the approved architecture boundaries for later milestones while remaining buildable now.
 
+## Task 0: Verify Pinned FANUC Upstream Layout
+
+**Files:**
+- No repository files are created or modified.
+
+- [ ] **Step 1: Install or verify required tooling**
+
+Run:
+
+```bash
+if ! command -v git >/dev/null 2>&1 || ! command -v vcs >/dev/null 2>&1; then
+  sudo apt update
+  sudo apt install -y git python3-vcstool
+fi
+
+command -v git
+command -v vcs
+python3 --version
+```
+
+Expected: `git` and `vcs` paths are printed, and Python prints its version.
+
+- [ ] **Step 2: Create a temporary locked upstream manifest**
+
+Run:
+
+```bash
+rm -rf /tmp/fanuc_humble_upstream_check
+mkdir -p /tmp/fanuc_humble_upstream_check/src
+cd /tmp/fanuc_humble_upstream_check
+
+cat > fanuc_upstream.lock.repos <<'YAML'
+repositories:
+  fanuc_description:
+    type: git
+    url: https://github.com/FANUC-CORPORATION/fanuc_description.git
+    version: de27dcbc36e2e6268ec3a5b4fd49d87c71d42928
+  fanuc_driver:
+    type: git
+    url: https://github.com/FANUC-CORPORATION/fanuc_driver.git
+    version: 8dc93117618515f0cdd5ec51df0dbeaee3971d4f
+YAML
+```
+
+Expected: `/tmp/fanuc_humble_upstream_check/fanuc_upstream.lock.repos` exists.
+
+- [ ] **Step 3: Import the pinned upstream repositories**
+
+Run:
+
+```bash
+cd /tmp/fanuc_humble_upstream_check
+vcs import src < fanuc_upstream.lock.repos
+git -C src/fanuc_driver submodule update --init --recursive
+```
+
+Expected: `src/fanuc_description` and `src/fanuc_driver` exist, and `fanuc_driver` submodules finish without errors.
+
+- [ ] **Step 4: Verify imported commits match the plan pins**
+
+Run:
+
+```bash
+cd /tmp/fanuc_humble_upstream_check
+test "$(git -C src/fanuc_description rev-parse HEAD)" = "de27dcbc36e2e6268ec3a5b4fd49d87c71d42928"
+test "$(git -C src/fanuc_driver rev-parse HEAD)" = "8dc93117618515f0cdd5ec51df0dbeaee3971d4f"
+```
+
+Expected: both `test` commands exit `0`.
+
+- [ ] **Step 5: Verify required upstream ROS package names**
+
+Run:
+
+```bash
+cd /tmp/fanuc_humble_upstream_check
+find src/fanuc_description src/fanuc_driver -maxdepth 2 -name package.xml -print | sort | tee package_files.txt
+grep -Fx "src/fanuc_description/fanuc_crx_description/package.xml" package_files.txt
+grep -Fx "src/fanuc_driver/fanuc_hardware_interface/package.xml" package_files.txt
+grep -Fx "src/fanuc_driver/fanuc_moveit_config/package.xml" package_files.txt
+grep -Fx "src/fanuc_driver/fanuc_msgs/package.xml" package_files.txt
+```
+
+Expected: each `grep` prints the matching package path. These package names are the names used by later xacro, launch, and MoveIt steps.
+
+- [ ] **Step 6: Verify CRX-10iA/L description and macro signature**
+
+Run:
+
+```bash
+cd /tmp/fanuc_humble_upstream_check
+python3 - <<'PY'
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+macro_path = Path("src/fanuc_description/fanuc_crx_description/urdf/crx10ia_l_urdf_macro.xacro")
+robot_path = Path("src/fanuc_description/fanuc_crx_description/robot/crx10ia_l.urdf.xacro")
+
+assert macro_path.is_file(), macro_path
+assert robot_path.is_file(), robot_path
+
+root = ET.parse(macro_path).getroot()
+macro = None
+for element in root.iter():
+    if element.tag.endswith("macro") and element.attrib.get("name") == "crx10ia_l":
+        macro = element
+        break
+
+assert macro is not None, "crx10ia_l macro not found"
+params = macro.attrib["params"].split()
+for required in ["parent", "*origin", "child"]:
+    assert required in params, f"missing macro parameter: {required}"
+
+robot_text = robot_path.read_text()
+assert '<xacro:crx10ia_l parent="world" child="ee_link">' in robot_text
+print("crx10ia_l macro signature ok")
+PY
+```
+
+Expected: Python prints `crx10ia_l macro signature ok`.
+
+- [ ] **Step 7: Verify FANUC driver files used by mock launch and MoveIt**
+
+Run:
+
+```bash
+cd /tmp/fanuc_humble_upstream_check
+test -f src/fanuc_driver/fanuc_hardware_interface/robot/crx10ia_l.urdf.xacro
+test -f src/fanuc_driver/fanuc_hardware_interface/launch/fanuc_mock_control.launch.py
+test -f src/fanuc_driver/fanuc_moveit_config/launch/fanuc_moveit.launch.py
+test -f src/fanuc_driver/fanuc_moveit_config/srdf/crx10ia_l.srdf
+
+python3 - <<'PY'
+from pathlib import Path
+
+hardware_xacro = Path("src/fanuc_driver/fanuc_hardware_interface/robot/crx10ia_l.urdf.xacro").read_text()
+mock_launch = Path("src/fanuc_driver/fanuc_hardware_interface/launch/fanuc_mock_control.launch.py").read_text()
+moveit_launch = Path("src/fanuc_driver/fanuc_moveit_config/launch/fanuc_moveit.launch.py").read_text()
+srdf = Path("src/fanuc_driver/fanuc_moveit_config/srdf/crx10ia_l.srdf").read_text()
+
+assert '<xacro:arg name="use_mock" default="false"/>' in hardware_xacro
+assert '<xacro:crx10ia_l parent="world" child="end_effector">' in hardware_xacro
+assert '<xacro:crx_control name="crx10ia_l"/>' in hardware_xacro
+assert "fanuc_mock_control.launch.py" in moveit_launch
+assert "robot_model" in mock_launch
+assert "robot_series" in mock_launch
+assert '<group name="manipulator">' in srdf
+assert '<chain base_link="base_link" tip_link="flange"/>' in srdf
+print("fanuc mock and MoveIt files ok")
+PY
+```
+
+Expected: Python prints `fanuc mock and MoveIt files ok`.
+
+- [ ] **Step 8: Leave the repository unchanged**
+
+Run from the project repository:
+
+```bash
+cd /home/dev/Develop/Fanuc/Fanuc_Robotics
+git status --short --branch
+```
+
+Expected: the project repository has no changes caused by Task 0.
+
 ## Task 1: Add Workspace Metadata and Dependency Manifests
 
 **Files:**
@@ -1837,6 +2002,7 @@ or a clean branch status with no untracked or modified files.
 
 ## Self-Review Checklist
 
+- H1 upstream package and xacro/launch name verification is covered by Task 0.
 - M0 dependency manifests are covered by Task 1.
 - M0 setup notes are covered by Task 2.
 - M0 package skeletons are covered by Task 3.
