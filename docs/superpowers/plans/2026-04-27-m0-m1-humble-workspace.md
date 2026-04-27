@@ -88,9 +88,19 @@ Responsibilities:
 Run:
 
 ```bash
-if ! command -v git >/dev/null 2>&1 || ! command -v vcs >/dev/null 2>&1; then
+if ! command -v git >/dev/null 2>&1; then
   sudo apt update
-  sudo apt install -y git python3-vcstool
+  sudo apt install -y git
+fi
+
+if ! command -v vcs >/dev/null 2>&1; then
+  if sudo -n true 2>/dev/null; then
+    sudo apt update
+    sudo apt install -y python3-vcstool
+  else
+    python3 -m pip install --user vcstool
+    export PATH="${HOME}/.local/bin:${PATH}"
+  fi
 fi
 
 command -v git
@@ -98,7 +108,7 @@ command -v vcs
 python3 --version
 ```
 
-Expected: `git` and `vcs` paths are printed, and Python prints its version.
+Expected: `git` and `vcs` paths are printed, and Python prints its version. In non-interactive environments without passwordless sudo, `vcs` may resolve from `${HOME}/.local/bin`.
 
 - [ ] **Step 2: Create a temporary locked upstream manifest**
 
