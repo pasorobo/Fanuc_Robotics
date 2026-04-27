@@ -1,0 +1,12 @@
+build/
+install/
+log/
+.colcon/
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.vscode/
+.idea/
+*.swp
+*.swo
