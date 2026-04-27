@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<robot name="crx10ial_cell" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:include filename="$(find fanuc_crx_description)/urdf/crx10ia_l_urdf_macro.xacro"/>
+
+  <link name="world"/>
+  <link name="end_effector"/>
+
+  <xacro:crx10ia_l parent="world" child="end_effector">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:crx10ia_l>
+
+  <link name="table">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="1.0 0.7 0.04"/></geometry>
+      <material name="mat_table_gray"><color rgba="0.45 0.47 0.50 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="1.0 0.7 0.04"/></geometry>
+    </collision>
+  </link>
+  <joint name="world_to_table" type="fixed">
+    <parent link="world"/><child link="table"/>
+    <origin xyz="0.75 0 0.70" rpy="0 0 0"/>
+  </joint>
+
+  <link name="work_object">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.08 0.08 0.05"/></geometry>
+      <material name="mat_work_object_blue"><color rgba="0.1 0.35 0.85 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.08 0.08 0.05"/></geometry>
+    </collision>
+  </link>
+  <joint name="table_to_work_object" type="fixed">
+    <parent link="table"/><child link="work_object"/>
+    <origin xyz="-0.20 0 0.045" rpy="0 0 0"/>
+  </joint>
+
+  <link name="camera_stand">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.05 0.05 0.70"/></geometry>
+      <material name="mat_camera_stand_dark"><color rgba="0.12 0.12 0.12 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.05 0.05 0.70"/></geometry>
+    </collision>
+  </link>
+  <joint name="world_to_camera_stand" type="fixed">
+    <parent link="world"/><child link="camera_stand"/>
+    <origin xyz="0.35 -0.55 0.35" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tool_stub">
+    <visual>
+      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <geometry><box size="0.08 0.08 0.08"/></geometry>
+      <material name="mat_tool_stub_green"><color rgba="0.15 0.55 0.25 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+      <geometry><box size="0.08 0.08 0.08"/></geometry>
+    </collision>
+  </link>
+  <joint name="end_effector_to_tool_stub" type="fixed">
+    <parent link="end_effector"/><child link="tool_stub"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+</robot>
