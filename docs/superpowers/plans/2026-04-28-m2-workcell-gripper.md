@@ -102,6 +102,7 @@ Run:
 ```bash
 source /opt/ros/humble/setup.bash
 ./scripts/import_dependencies.sh third_party.humble.lock.repos
+# Humble rosdep has no rule for the buildtool key `ament_python`; the ROS install already provides it.
 rosdep install --from-paths src --ignore-src -r -y --rosdistro humble --skip-keys ament_python
 colcon build --symlink-install
 ```
@@ -1615,6 +1616,9 @@ def launch_setup(context, *args, **kwargs):
         .to_moveit_configs()
     )
 
+    # The cell xacro already expands FANUC's ros2_control macro. Start the same
+    # mock control nodes as FANUC upstream here so MoveIt and ros2_control share
+    # this single robot_description instead of expanding two independent URDFs.
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -1925,6 +1929,16 @@ def state_validity_request(joint_names, point) -> GetStateValidity.Request:
     return request
 
 
+def target_validity_request() -> GetStateValidity.Request:
+    request = GetStateValidity.Request()
+    request.group_name = "manipulator"
+    request.robot_state.joint_state = JointState()
+    request.robot_state.joint_state.name = list(SAFE_JOINT_TARGET.keys())
+    request.robot_state.joint_state.position = list(SAFE_JOINT_TARGET.values())
+    request.robot_state.is_diff = True
+    return request
+
+
 def main() -> int:
     rclpy.init()
     node = rclpy.create_node("check_m2_static_scene_plan")
@@ -1936,6 +1950,13 @@ def main() -> int:
             return 1
         if not validity_client.wait_for_service(timeout_sec=30.0):
             print("ERROR: /check_state_validity unavailable", file=sys.stderr)
+            return 1
+
+        target_future = validity_client.call_async(target_validity_request())
+        rclpy.spin_until_future_complete(node, target_future, timeout_sec=15.0)
+        target_validity = target_future.result()
+        if target_validity is None or not target_validity.valid:
+            print("ERROR: SAFE_JOINT_TARGET is invalid in the static scene", file=sys.stderr)
             return 1
 
         future = plan_client.call_async(build_plan_request())
