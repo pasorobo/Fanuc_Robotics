@@ -1,0 +1,11 @@
+uint8 IDLE=0
+uint8 OPEN=1
+uint8 CLOSED=2
+uint8 HOLDING=3
+
+---
+uint8 state
+float64 width_m
+float64 force_n
+string attached_object_id
+bool vacuum_enabled

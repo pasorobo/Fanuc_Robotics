@@ -1,0 +1,16 @@
+uint8 OPEN=1
+uint8 CLOSE=2
+uint8 VACUUM_ON=3
+uint8 VACUUM_OFF=4
+
+uint8 command
+float64 width_m
+float64 force_n
+---
+bool success
+string message
+uint8 state
+float64 width_m
+float64 force_n
+string attached_object_id
+bool vacuum_enabled

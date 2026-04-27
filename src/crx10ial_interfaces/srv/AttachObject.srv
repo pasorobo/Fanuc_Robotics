@@ -1,0 +1,5 @@
+string object_id
+---
+bool success
+string message
+string attached_object_id
