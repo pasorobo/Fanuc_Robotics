@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 540" font-family="sans-serif" font-size="14">
+  <rect width="800" height="540" fill="white"/>
+  <text x="400" y="32" text-anchor="middle" font-size="18" font-weight="bold">Software Stack Overview</text>
+  <g stroke="#1f3a93" stroke-width="2" fill="#eaf0ff">
+    <rect x="80" y="60" width="640" height="60" rx="6"/>
+    <rect x="80" y="140" width="640" height="60" rx="6"/>
+    <rect x="80" y="220" width="640" height="60" rx="6"/>
+    <rect x="80" y="300" width="640" height="60" rx="6"/>
+    <rect x="80" y="380" width="640" height="60" rx="6"/>
+    <rect x="80" y="460" width="300" height="50" rx="6"/>
+    <rect x="420" y="460" width="300" height="50" rx="6" fill="#fff5e6"/>
+  </g>
+  <g fill="#000" font-size="14">
+    <text x="400" y="95" text-anchor="middle" font-weight="bold">Task layer</text>
+    <text x="400" y="115" text-anchor="middle" font-size="12">crx10ial_tasks - MoveIt Task Constructor pipelines</text>
+    <text x="400" y="175" text-anchor="middle" font-weight="bold">Planning layer</text>
+    <text x="400" y="195" text-anchor="middle" font-size="12">MoveIt 2 - planning scene, kinematics, collision, OMPL</text>
+    <text x="400" y="255" text-anchor="middle" font-weight="bold">Control adapter layer</text>
+    <text x="400" y="275" text-anchor="middle" font-size="12">crx10ial_bringup launch, crx10ial_gripper, crx10ial_vision_bridge, crx10ial_safety</text>
+    <text x="400" y="335" text-anchor="middle" font-weight="bold">ros2_control + Hardware abstraction</text>
+    <text x="400" y="355" text-anchor="middle" font-size="12">controller_manager, joint_state_broadcaster, joint_trajectory_controller</text>
+    <text x="400" y="415" text-anchor="middle" font-weight="bold">Execution backend</text>
+    <text x="400" y="435" text-anchor="middle" font-size="12">FANUC ROS 2 driver / mock / Gazebo (future)</text>
+    <text x="230" y="490" text-anchor="middle" font-weight="bold">URDF / xacro / SRDF</text>
+    <text x="230" y="505" text-anchor="middle" font-size="12">crx10ial_cell_description</text>
+    <text x="570" y="490" text-anchor="middle" font-weight="bold">Sim / Vision (future)</text>
+    <text x="570" y="505" text-anchor="middle" font-size="12">Gazebo Fortress, gz_ros2_control, iRVision</text>
+  </g>
+</svg>
