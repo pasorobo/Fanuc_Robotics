@@ -25,7 +25,7 @@ The project uses `colcon` for building and `vcstool` for fetching upstream sourc
 - **xacro** is a templating layer over URDF; the cell composition uses `<xacro:macro>` and `<xacro:include>` to compose the FANUC robot description, the workcell environment (table, work object, camera stand), and the gripper.
 - **SRDF** is MoveIt's semantic description: planning groups, named states, end-effector names, allowed-collision matrix overrides.
 
-The cell xacro is the single source of truth for `robot_description`. It serves both MoveIt and ros2_control. See `docs/decisions/0005-cell-xacro-as-single-robot-description.md`.
+The cell xacro is the single source of truth for `robot_description`. It serves both MoveIt and ros2_control. See [decisions/0005](../decisions/0005-cell-xacro-as-single-robot-description.md).
 
 ## ros2_control
 
@@ -56,7 +56,7 @@ MTC orchestrates multi-stage tasks (pick, place, transit) on top of MoveIt 2. Co
 - **Container** - groups stages (`SerialContainer`, `Alternatives`, `Fallbacks`).
 - **Solution** - one valid composition of stage results.
 
-The project uses MTC apt binaries (`ros-humble-moveit-task-constructor-*`) for fixed pick/place planning. MTC's internal scene transitions (e.g., `ModifyPlanningScene::attachObject()`) update the planner's view but never the runtime planning scene; runtime scene writes are owned by `crx10ial_gripper` per `docs/decisions/0003-fake-gripper-as-runtime-scene-owner.md`.
+The project uses MTC apt binaries (`ros-humble-moveit-task-constructor-*`) for fixed pick/place planning. MTC's internal scene transitions (e.g., `ModifyPlanningScene::attachObject()`) update the planner's view but never the runtime planning scene; runtime scene writes are owned by `crx10ial_gripper` per [decisions/0003](../decisions/0003-fake-gripper-as-runtime-scene-owner.md).
 
 ## FANUC ROS 2 Driver
 

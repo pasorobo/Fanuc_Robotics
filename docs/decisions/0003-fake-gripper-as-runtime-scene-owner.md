@@ -40,7 +40,7 @@ Positive:
 Negative:
 
 - Mock execution must reorder operations relative to the textbook MTC flow. Specifically: pregrasp -> close -> attach -> move-to-grasp, instead of pregrasp -> move-to-grasp -> close -> attach. Without the reorder, the runtime scene still has the world `work_object` when the arm tries to reach the grasp pose, and goal collision rejects the plan.
-- New contributors are unfamiliar with this convention because it differs from the MoveIt MTC tutorial. Mitigated by this ADR plus the documentation in `docs/architecture.md`.
+- New contributors are unfamiliar with this convention because it differs from the MoveIt MTC tutorial. Mitigated by this ADR plus the documentation in [../architecture.md](../architecture.md).
 
 ## Enforcement
 

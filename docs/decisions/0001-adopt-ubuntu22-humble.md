@@ -25,7 +25,7 @@ External constraints affecting the choice:
 
 Adopt **Ubuntu 22.04 LTS + ROS 2 Humble Hawksbill** as the primary target for M0-M7.
 
-A future migration to Ubuntu 24.04 / ROS 2 Jazzy / Gazebo Harmonic is acknowledged as a follow-on track but is explicitly outside the initial milestones. Code is kept "migration aware" by isolating simulator-specific assets in `crx10ial_sim` (see ADR-0005, `0005-cell-xacro-as-single-robot-description.md`) and by avoiding Humble-only API surfaces where Jazzy equivalents are well-known.
+A future migration to Ubuntu 24.04 / ROS 2 Jazzy / Gazebo Harmonic is acknowledged as a follow-on track but is explicitly outside the initial milestones. Code is kept "migration aware" by isolating simulator-specific assets in `crx10ial_sim` (see [ADR-0005](0005-cell-xacro-as-single-robot-description.md)) and by avoiding Humble-only API surfaces where Jazzy equivalents are well-known.
 
 ## Consequences
 

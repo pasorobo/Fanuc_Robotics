@@ -76,7 +76,7 @@ Validation rules implemented in `crx10ial_tasks/src/fixed_pick_place_config.cpp`
 
 Notes on conventions:
 
-- `grasp.approach.direction` is expressed in `hand_frame` (`grasp_link`). The default `[1, 0, 0]` matches the `+X approach` convention from `docs/frames.md`.
+- `grasp.approach.direction` is expressed in `hand_frame` (`grasp_link`). The default `[1, 0, 0]` matches the `+X approach` convention from [frames.md](frames.md).
 - `grasp.pose.xyz: [0, 0, 0]` means the grasp pose equals the object pose. The MTC stage moves first to a *pre-grasp* pose computed as `grasp_world_pose - approach.max * approach.direction`.
 - `failure.place.pose.xyz: [2.0, ...]` is intentionally outside the robot's reach (1.249 m). It produces deterministic IK failure for the `negative_plan` run mode.
 

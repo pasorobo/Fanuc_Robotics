@@ -5,7 +5,7 @@ This page takes a contributor from a fresh Ubuntu 22.04 machine to a running moc
 ## Prerequisites
 
 - Ubuntu 22.04 LTS, x86-64.
-- ROS 2 Humble desktop install. See `docs/setup/ubuntu22_humble.md` for the long form.
+- ROS 2 Humble desktop install. See [setup/ubuntu22_humble.md](setup/ubuntu22_humble.md) for the long form.
 - Network access for git clones and apt installs.
 - A user account with `sudo`.
 
@@ -92,8 +92,8 @@ Expected: the task reports `M3 negative planning produced diagnostics` plus a Fa
 
 ## Where to go next
 
-- Concepts: `docs/concepts/software_overview.md`, `docs/concepts/hardware_overview.md`.
-- Architecture: `docs/architecture.md`.
-- Frame conventions: `docs/frames.md`.
-- When something does not work: `docs/troubleshooting.md`.
-- Decision rationale: `docs/decisions/`.
+- Concepts: [concepts/software_overview.md](concepts/software_overview.md), [concepts/hardware_overview.md](concepts/hardware_overview.md).
+- Architecture: [architecture.md](architecture.md).
+- Frame conventions: [frames.md](frames.md).
+- When something does not work: [troubleshooting.md](troubleshooting.md).
+- Decision rationale: [decisions/](decisions/).

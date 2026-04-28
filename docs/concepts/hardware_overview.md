@@ -22,7 +22,7 @@ The robot exposes several frames that ROS 2 cares about:
 - `J1`..`J6` link frames.
 - `flange` - mechanical interface for tool attachment.
 - `tool0` - FANUC default tool frame at flange.
-- Project-specific extensions: `end_effector`, `tool_link`, `grasp_link` (see `docs/frames.md`).
+- Project-specific extensions: `end_effector`, `tool_link`, `grasp_link` (see [frames.md](../frames.md)).
 
 ## Controller
 
@@ -33,7 +33,7 @@ Relevant software options for ROS 2 integration:
 - **J519 Stream Motion** - high-rate joint streaming. Required by the FANUC ROS 2 driver for trajectory execution.
 - **R912 Remote Motion Interface (RMI)** - command and status path used by the driver.
 - **S636 External Control Package** - alternative external command path.
-- **iRVision** - FANUC built-in vision system. Used in the project as a controller-side feature; see `docs/decisions/0003-fake-gripper-as-runtime-scene-owner.md` for ownership boundary.
+- **iRVision** - FANUC built-in vision system. Used in the project as a controller-side feature; see [decisions/0003](../decisions/0003-fake-gripper-as-runtime-scene-owner.md) for ownership boundary.
 
 The Teach Pendant is the operator interface and is the source of authority for safety. Dual Check Safety (DCS) and reduced-speed mode are configured here, not in ROS 2.
 
@@ -58,7 +58,7 @@ The Linux ROS 2 host and the controller communicate over Ethernet. Required:
 - Subnet that does not collide with other engineering networks.
 - Firewall openings for J519 / RMI ports as documented by FANUC.
 
-See `docs/concepts/system_block_diagram.md` for the high-level layout.
+See [system_block_diagram.md](system_block_diagram.md) for the high-level layout.
 
 ## Safety
 
@@ -68,4 +68,4 @@ ROS 2 is not safety-rated in this project. Authority for stopping the robot, enf
 - The Teach Pendant operator.
 - An external emergency stop integrated into the cell.
 
-ROS 2 application code may add convenience guards (workspace limits, recovery flows) but those are not safety functions. See `docs/decisions/0001-adopt-ubuntu22-humble.md` and the project safety section in operations docs.
+ROS 2 application code may add convenience guards (workspace limits, recovery flows) but those are not safety functions. See [decisions/0001](../decisions/0001-adopt-ubuntu22-humble.md) and the project safety section in operations docs.

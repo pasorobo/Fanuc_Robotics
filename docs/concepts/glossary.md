@@ -11,7 +11,7 @@ MoveIt's per-pair toggle of which links and objects are allowed to be in contact
 ROS 2 package build types. `ament_cmake` is for C++ packages and packages that ship configuration files. `ament_python` is for pure-Python ROS 2 nodes. Each top-level project package picks one.
 
 **ADR (Architecture Decision Record)**
-A short Markdown document recording a single technical decision: why it was made, what was decided, and the trade-offs accepted. See `docs/decisions/`.
+A short Markdown document recording a single technical decision: why it was made, what was decided, and the trade-offs accepted. See [docs/decisions/](../decisions/).
 
 ## C
 
@@ -43,7 +43,7 @@ The link in this project's cell xacro that anchors gripper geometry. Sits betwee
 ## F
 
 **fake_gripper**
-The mock backend that owns runtime planning-scene attach/detach. See `docs/decisions/0003-fake-gripper-as-runtime-scene-owner.md`.
+The mock backend that owns runtime planning-scene attach/detach. See [decisions/0003](../decisions/0003-fake-gripper-as-runtime-scene-owner.md).
 
 **flange**
 FANUC's mechanical tool mounting frame. Tools attach here.
@@ -54,7 +54,7 @@ FANUC's mechanical tool mounting frame. Tools attach here.
 Ignition Fortress, the LTS simulator targeted by M4. Supports `gz_ros2_control`.
 
 **grasp_link**
-Project frame at which objects are attached during grasping. Convention: +X approach, +Y jaw opening, +Z up. See `docs/frames.md`.
+Project frame at which objects are attached during grasping. Convention: +X approach, +Y jaw opening, +Z up. See [frames.md](../frames.md).
 
 **gz_ros2_control**
 The Gazebo Fortress bridge to ros2_control.

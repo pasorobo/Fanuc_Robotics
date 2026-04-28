@@ -1,6 +1,6 @@
 # Architecture
 
-This document explains how the project is organized into layers and packages, and how data flows between them. For background on individual technologies, see `docs/concepts/software_overview.md`.
+This document explains how the project is organized into layers and packages, and how data flows between them. For background on individual technologies, see [concepts/software_overview.md](concepts/software_overview.md).
 
 ## Four-layer architecture
 
@@ -46,7 +46,7 @@ The mock launch wires this graph:
 5. `crx10ial_bringup/mock_scene_node.py` publishes static workcell collision objects (table, work_object, camera_stand) to `/collision_object`.
 6. `crx10ial_gripper/fake_gripper_node.py` exposes `command`, `attach_object`, `detach_object`, `get_state` and applies attach/detach diffs to the runtime planning scene through `/apply_planning_scene`.
 
-The cell xacro is the single robot_description source; see `docs/decisions/0005-cell-xacro-as-single-robot-description.md`. The mock launch composes the same FANUC mock controllers as the upstream FANUC mock launch, but starts them locally so the URDF is not expanded twice.
+The cell xacro is the single robot_description source; see [decisions/0005](decisions/0005-cell-xacro-as-single-robot-description.md). The mock launch composes the same FANUC mock controllers as the upstream FANUC mock launch, but starts them locally so the URDF is not expanded twice.
 
 ## C1 contract
 
@@ -58,7 +58,7 @@ The C1 contract is the rule that runtime planning-scene writes for attached obje
 - The project never calls `Task::execute()`. Doing so would also write the runtime scene through MTC's executor.
 - Runtime attach/detach goes through `crx10ial_gripper`'s services. The gripper service applies the scene diff via `/apply_planning_scene`.
 
-This contract is enforced by source-contract pytests in `crx10ial_tasks` and by a runtime check (`/get_planning_scene` after attach asserts exactly one attached `work_object` and zero world duplicates). See `docs/decisions/0003-fake-gripper-as-runtime-scene-owner.md` for the full rationale.
+This contract is enforced by source-contract pytests in `crx10ial_tasks` and by a runtime check (`/get_planning_scene` after attach asserts exactly one attached `work_object` and zero world duplicates). See [decisions/0003](decisions/0003-fake-gripper-as-runtime-scene-owner.md) for the full rationale.
 
 ## Where new code goes
 

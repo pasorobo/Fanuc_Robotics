@@ -46,5 +46,5 @@ Negative:
 Mitigations:
 
 - Maintain a pinned-commit lock file so accidental upstream regressions are caught at the next intentional bump.
-- Document required FANUC controller options in M7 prep and in `docs/concepts/hardware_overview.md`.
+- Document required FANUC controller options in M7 prep and in [../concepts/hardware_overview.md](../concepts/hardware_overview.md).
 - Keep the project's gripper, vision, and task layers behind their own interfaces so a future driver change does not cascade through application code.

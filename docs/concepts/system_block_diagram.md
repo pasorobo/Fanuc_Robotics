@@ -24,4 +24,4 @@ The diagram below shows the physical and logical components in a CRX-10iA/L work
 
 The FANUC controller and its DCS configuration are safety-rated. ROS 2 application code is not. Any feature that affects the robot's motion safety must be implemented and reviewed on the controller side (Teach Pendant, DCS, payload schedule).
 
-For the layered software stack that runs on the Linux PC, see [software_overview.md](software_overview.md). For frame conventions used inside the cell description, see `docs/frames.md`.
+For the layered software stack that runs on the Linux PC, see [software_overview.md](software_overview.md). For frame conventions used inside the cell description, see [frames.md](../frames.md).

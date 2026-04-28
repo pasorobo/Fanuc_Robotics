@@ -51,4 +51,4 @@ These come from M2 (`crx10ial_cell.urdf.xacro`) and `crx10ial_bringup/mock_scene
 - **Static world geometry** is published by `mock_scene_publisher` (in `crx10ial_bringup`) as MoveIt collision objects. The cell xacro contains the same geometry as URDF for visualization, but MoveIt's planning view comes from the publisher, not the URDF.
 - **Robot links** come from the FANUC URDF.
 - **Project tool links** come from the cell xacro.
-- **Attached objects** are owned by `crx10ial_gripper` at runtime (see `docs/decisions/0003-fake-gripper-as-runtime-scene-owner.md`).
+- **Attached objects** are owned by `crx10ial_gripper` at runtime (see [decisions/0003](decisions/0003-fake-gripper-as-runtime-scene-owner.md)).
