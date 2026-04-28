@@ -8,8 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
 find_package(ament_cmake_pytest REQUIRED)
+find_package(crx10ial_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_core REQUIRED)
+find_package(moveit_msgs REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
@@ -31,6 +33,11 @@ set(MTC_DEPS
   moveit_ros_planning_interface
   moveit_task_constructor_core
   moveit_task_constructor_msgs
+)
+
+set(RUNTIME_DEPS
+  crx10ial_interfaces
+  moveit_msgs
 )
 
 add_library(fixed_pick_place_config
@@ -59,7 +66,7 @@ target_link_libraries(fixed_pick_place
   fixed_pick_place_config
   fixed_pick_place_task
 )
-ament_target_dependencies(fixed_pick_place ${CONFIG_DEPS} ${MTC_DEPS})
+ament_target_dependencies(fixed_pick_place ${CONFIG_DEPS} ${MTC_DEPS} ${RUNTIME_DEPS})
 
 install(TARGETS fixed_pick_place_config
   EXPORT export_${PROJECT_NAME}
@@ -75,6 +82,10 @@ install(TARGETS fixed_pick_place_task
 )
 install(TARGETS fixed_pick_place
   RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+install(PROGRAMS
+  test/check_single_attached_object.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/
   DESTINATION include
