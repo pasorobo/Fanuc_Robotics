@@ -798,6 +798,28 @@ def test_mtc_failure_diagnostics_are_reported():
     assert "task.explainFailure" in source
     assert "task.printState" in source
     assert "solutions().empty()" in source
+
+
+def test_mtc_moves_to_pregrasp_before_approach():
+    source = _read("src/fixed_pick_place_task.cpp")
+
+    assert 'MoveTo>("move to pregrasp pose"' in source
+    assert "const auto pregrasp_pose = translated_pose(" in source
+    assert "stage->setGoal(stamped_pose(config.object.frame_id, pregrasp_pose));" in source
+
+
+def test_execute_mock_attaches_before_grasp_motion_when_node_exists():
+    node_path = ROOT / "src" / "fixed_pick_place_node.cpp"
+    if not node_path.exists():
+        return
+
+    source = node_path.read_text(encoding="utf-8")
+    attach_index = source.index("attach_object(node, config);")
+    grasp_index = source.index(
+        'move_to_pose(move_group, grasp_world_pose, config.hand_frame, "grasp");'
+    )
+
+    assert attach_index < grasp_index
 ```
 
 - [ ] **Step 2: Run contract tests and verify they fail**
@@ -892,6 +914,16 @@ geometry_msgs::msg::Vector3Stamped stamped_vector(
   return stamped;
 }
 
+geometry_msgs::msg::Pose translated_pose(
+    geometry_msgs::msg::Pose pose,
+    const geometry_msgs::msg::Vector3& direction,
+    double distance) {
+  pose.position.x += direction.x * distance;
+  pose.position.y += direction.y * distance;
+  pose.position.z += direction.z * distance;
+  return pose;
+}
+
 }  // namespace
 
 mtc::Task build_fixed_pick_place_task(
@@ -918,12 +950,16 @@ mtc::Task build_fixed_pick_place_task(
   task.add(std::make_unique<stages::CurrentState>("current state"));
 
   const auto grasp_world_pose = compose_pose(config.object.pose, config.grasp.pose);
+  const auto pregrasp_pose = translated_pose(
+      grasp_world_pose,
+      config.grasp.approach.direction,
+      -config.grasp.approach.max_distance);
 
   {
-    auto stage = std::make_unique<stages::MoveTo>("move to grasp pose", sampling_planner);
+    auto stage = std::make_unique<stages::MoveTo>("move to pregrasp pose", sampling_planner);
     stage->setGroup(config.arm_group_name);
     stage->setIKFrame(config.hand_frame);
-    stage->setGoal(stamped_pose(config.object.frame_id, grasp_world_pose));
+    stage->setGoal(stamped_pose(config.object.frame_id, pregrasp_pose));
     task.add(std::move(stage));
   }
 
@@ -1618,11 +1654,11 @@ int run_execute_mock(
 
     command_gripper(node, config, 1);
     move_to_pose(move_group, pregrasp_pose, config.hand_frame, "pregrasp");
-    move_to_pose(move_group, grasp_world_pose, config.hand_frame, "grasp");
     command_gripper(node, config, 2);
     attach_object(node, config);
     verify_single_runtime_attachment(node, config.object.id);
     RCLCPP_INFO(node->get_logger(), "M3 single attached object verified");
+    move_to_pose(move_group, grasp_world_pose, config.hand_frame, "grasp");
     move_to_pose(move_group, retreat_pose, config.hand_frame, "retreat");
     move_to_pose(move_group, config.place.pose, config.hand_frame, "place");
     detach_object(node);
@@ -1881,9 +1917,7 @@ for _ in $(seq 1 90); do
   sleep 1
 done
 
-ros2 run crx10ial_tasks fixed_pick_place --ros-args \
-  --params-file src/crx10ial_tasks/config/fixed_pick_place.yaml \
-  -p run_mode:=execute_mock \
+ros2 launch crx10ial_tasks fixed_pick_place.launch.py run_mode:=execute_mock \
   2>&1 | tee "${EXEC}"
 
 grep -q "M3 fixed pick/place planning succeeded" "${EXEC}"
