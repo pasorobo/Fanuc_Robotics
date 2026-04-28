@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 540" font-family="sans-serif" font-size="13">
+  <rect width="800" height="540" fill="white"/>
+  <text x="400" y="32" text-anchor="middle" font-size="18" font-weight="bold">Cell Frame Tree</text>
+  <g stroke="#1f3a93" stroke-width="1.6" fill="#eaf0ff">
+    <rect x="340" y="60" width="120" height="34" rx="4"/>
+    <rect x="100" y="140" width="160" height="34" rx="4"/>
+    <rect x="320" y="140" width="160" height="34" rx="4"/>
+    <rect x="540" y="140" width="160" height="34" rx="4"/>
+    <rect x="60" y="220" width="160" height="34" rx="4"/>
+    <rect x="320" y="220" width="160" height="34" rx="4"/>
+    <rect x="320" y="300" width="160" height="34" rx="4"/>
+    <rect x="180" y="380" width="120" height="34" rx="4"/>
+    <rect x="320" y="380" width="120" height="34" rx="4"/>
+    <rect x="460" y="380" width="120" height="34" rx="4"/>
+    <rect x="320" y="460" width="160" height="34" rx="4" fill="#fff5e6"/>
+  </g>
+  <g fill="#000">
+    <text x="400" y="83" text-anchor="middle">world</text>
+    <text x="180" y="163" text-anchor="middle">work_table</text>
+    <text x="400" y="163" text-anchor="middle">base_link</text>
+    <text x="620" y="163" text-anchor="middle">camera_stand</text>
+    <text x="140" y="243" text-anchor="middle">work_object</text>
+    <text x="400" y="243" text-anchor="middle">flange</text>
+    <text x="400" y="323" text-anchor="middle">end_effector</text>
+    <text x="240" y="403" text-anchor="middle">gripper_palm</text>
+    <text x="380" y="403" text-anchor="middle">left_finger</text>
+    <text x="520" y="403" text-anchor="middle">right_finger</text>
+    <text x="400" y="483" text-anchor="middle">grasp_link</text>
+  </g>
+  <g stroke="#27ae60" stroke-width="1.4" fill="none">
+    <line x1="400" y1="94" x2="180" y2="140"/>
+    <line x1="400" y1="94" x2="400" y2="140"/>
+    <line x1="400" y1="94" x2="620" y2="140"/>
+    <line x1="180" y1="174" x2="140" y2="220"/>
+    <line x1="400" y1="174" x2="400" y2="220"/>
+    <line x1="400" y1="254" x2="400" y2="300"/>
+    <line x1="400" y1="334" x2="240" y2="380"/>
+    <line x1="400" y1="334" x2="380" y2="380"/>
+    <line x1="400" y1="334" x2="520" y2="380"/>
+    <line x1="400" y1="334" x2="400" y2="460"/>
+  </g>
+  <text x="60" y="525" font-size="12" fill="#7f8c8d">Yellow box: object attach target during grasp.</text>
+</svg>

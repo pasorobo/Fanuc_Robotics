@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" font-family="sans-serif" font-size="14">
+  <rect width="600" height="420" fill="white"/>
+  <text x="300" y="32" text-anchor="middle" font-size="18" font-weight="bold">grasp_link Axis Convention</text>
+  <g stroke="#1f3a93" stroke-width="2" fill="#eaf0ff">
+    <rect x="200" y="180" width="60" height="60" rx="4"/>
+    <text x="230" y="217" text-anchor="middle" font-size="12" fill="#000">grasp_link</text>
+  </g>
+  <g stroke="#c0392b" stroke-width="2" fill="#c0392b">
+    <line x1="260" y1="210" x2="450" y2="210" marker-end="url(#aX)"/>
+    <text x="460" y="214">+X (approach)</text>
+  </g>
+  <g stroke="#27ae60" stroke-width="2" fill="#27ae60">
+    <line x1="230" y1="180" x2="230" y2="60" marker-end="url(#aY)"/>
+    <text x="170" y="80">+Y (jaw)</text>
+  </g>
+  <g stroke="#1f3a93" stroke-width="2" fill="#1f3a93">
+    <line x1="230" y1="240" x2="170" y2="320" marker-end="url(#aZ)"/>
+    <text x="80" y="345">+Z (up from palm)</text>
+  </g>
+  <defs>
+    <marker id="aX" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c0392b"/></marker>
+    <marker id="aY" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#27ae60"/></marker>
+    <marker id="aZ" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1f3a93"/></marker>
+  </defs>
+  <text x="60" y="395" font-size="12" fill="#7f8c8d">Pre-grasp: move along -X. Approach: +X. Retreat after grasp: -X.</text>
+</svg>
