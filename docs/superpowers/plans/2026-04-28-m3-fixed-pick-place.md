@@ -253,7 +253,7 @@ fixed_pick_place:
     object.pose.xyz: [0.55, 0.0, 0.745]
     object.pose.rpy: [0.0, 0.0, 0.0]
     grasp.frame_id: grasp_link
-    grasp.pose.xyz: [0.0, 0.0, 0.0]
+    grasp.pose.xyz: [-0.10, 0.0, 0.255]
     grasp.pose.rpy: [0.0, 0.0, 0.0]
     grasp.approach.direction: [1.0, 0.0, 0.0]
     grasp.approach.min: 0.05
@@ -262,9 +262,9 @@ fixed_pick_place:
     grasp.retreat.min: 0.05
     grasp.retreat.max: 0.10
     place.frame_id: world
-    place.pose.xyz: [0.55, 0.20, 0.745]
+    place.pose.xyz: [0.45, 0.20, 1.00]
     place.pose.rpy: [0.0, 0.0, 0.0]
-    failure.place.pose.xyz: [2.00, 0.00, 0.745]
+    failure.place.pose.xyz: [2.00, 0.00, 1.00]
     failure.place.pose.rpy: [0.0, 0.0, 0.0]
     gripper.open_width_m: 0.08
     gripper.close_width_m: 0.02
@@ -363,7 +363,7 @@ rclcpp::NodeOptions options_with_overrides() {
       rclcpp::Parameter("object.pose.xyz", std::vector<double>{0.55, 0.0, 0.745}),
       rclcpp::Parameter("object.pose.rpy", std::vector<double>{0.0, 0.0, 0.0}),
       rclcpp::Parameter("grasp.frame_id", "grasp_link"),
-      rclcpp::Parameter("grasp.pose.xyz", std::vector<double>{0.0, 0.0, 0.0}),
+      rclcpp::Parameter("grasp.pose.xyz", std::vector<double>{-0.10, 0.0, 0.255}),
       rclcpp::Parameter("grasp.pose.rpy", std::vector<double>{0.0, 0.0, 0.0}),
       rclcpp::Parameter("grasp.approach.direction", std::vector<double>{1.0, 0.0, 0.0}),
       rclcpp::Parameter("grasp.approach.min", 0.05),
@@ -372,9 +372,9 @@ rclcpp::NodeOptions options_with_overrides() {
       rclcpp::Parameter("grasp.retreat.min", 0.05),
       rclcpp::Parameter("grasp.retreat.max", 0.10),
       rclcpp::Parameter("place.frame_id", "world"),
-      rclcpp::Parameter("place.pose.xyz", std::vector<double>{0.55, 0.20, 0.745}),
+      rclcpp::Parameter("place.pose.xyz", std::vector<double>{0.45, 0.20, 1.00}),
       rclcpp::Parameter("place.pose.rpy", std::vector<double>{0.0, 0.0, 0.0}),
-      rclcpp::Parameter("failure.place.pose.xyz", std::vector<double>{2.0, 0.0, 0.745}),
+      rclcpp::Parameter("failure.place.pose.xyz", std::vector<double>{2.0, 0.0, 1.00}),
       rclcpp::Parameter("failure.place.pose.rpy", std::vector<double>{0.0, 0.0, 0.0}),
       rclcpp::Parameter("gripper.open_width_m", 0.08),
       rclcpp::Parameter("gripper.close_width_m", 0.02),
@@ -1814,11 +1814,14 @@ trap cleanup EXIT
 for _ in $(seq 1 90); do
   ros2 service list > /tmp/crx10ial_m3_services.txt
   if grep -Fxq "/plan_kinematic_path" /tmp/crx10ial_m3_services.txt && \
+     grep -Fxq "/get_planning_scene" /tmp/crx10ial_m3_services.txt && \
      grep -Fxq "/crx10ial_gripper/attach_object" /tmp/crx10ial_m3_services.txt; then
     break
   fi
   sleep 1
 done
+
+sleep 5
 
 ros2 launch crx10ial_tasks fixed_pick_place.launch.py run_mode:=plan \
   2>&1 | tee "${PLAN}"
@@ -1860,11 +1863,15 @@ trap cleanup EXIT
 
 for _ in $(seq 1 90); do
   ros2 service list > /tmp/crx10ial_m3_negative_services.txt
-  if grep -Fxq "/plan_kinematic_path" /tmp/crx10ial_m3_negative_services.txt; then
+  if grep -Fxq "/plan_kinematic_path" /tmp/crx10ial_m3_negative_services.txt && \
+     grep -Fxq "/get_planning_scene" /tmp/crx10ial_m3_negative_services.txt && \
+     grep -Fxq "/crx10ial_gripper/attach_object" /tmp/crx10ial_m3_negative_services.txt; then
     break
   fi
   sleep 1
 done
+
+sleep 5
 
 ros2 launch crx10ial_tasks fixed_pick_place.launch.py run_mode:=negative_plan \
   2>&1 | tee "${NEG}"
@@ -1909,13 +1916,14 @@ trap cleanup EXIT
 for _ in $(seq 1 90); do
   ros2 service list > /tmp/crx10ial_m3_execute_services.txt
   if grep -Fxq "/plan_kinematic_path" /tmp/crx10ial_m3_execute_services.txt && \
-     grep -Fxq "/execute_trajectory" /tmp/crx10ial_m3_execute_services.txt && \
      grep -Fxq "/crx10ial_gripper/attach_object" /tmp/crx10ial_m3_execute_services.txt && \
      grep -Fxq "/get_planning_scene" /tmp/crx10ial_m3_execute_services.txt; then
     break
   fi
   sleep 1
 done
+
+sleep 5
 
 ros2 launch crx10ial_tasks fixed_pick_place.launch.py run_mode:=execute_mock \
   2>&1 | tee "${EXEC}"
@@ -1943,11 +1951,19 @@ Expected: mock execution succeeds, fake gripper owns one attached `work_object`,
 If Task 6 required source changes, commit them:
 
 ```bash
-git add src/crx10ial_tasks
+git add src/crx10ial_bringup src/crx10ial_cell_description src/crx10ial_tasks
 git commit -m "fix: stabilize fixed pick place smoke"
 ```
 
 If no files changed, skip this step.
+
+Runtime fixes found during execution:
+
+- `work_object` is attachable PlanningScene state only. The cell URDF keeps static fixtures (`table`, `camera_stand`), while `mock_scene.py` publishes only the attachable `work_object`. This avoids duplicate URDF-link/collision-object self-collisions in MTC.
+- The default grasp/place poses were raised to reachable, collision-free `grasp_link` targets. `grasp.pose` is object-relative and `place.pose` is the world-frame hand target used by MTC and execute_mock.
+- The MTC task uses explicit forward-only `MoveTo` stages for pregrasp, approach, retreat, place, and post-place retreat. This avoids Humble MTC `PropagatingEitherWay` direction inference issues and CartesianPath flakiness while preserving configurable approach/retreat vectors for target calculation.
+- Smoke waits include `/get_planning_scene` and a short settle delay. `/execute_trajectory` is not a service in this Humble/MoveIt setup, so Step 4 does not wait for it through `ros2 service list`.
+- `check_single_attached_object.py` must be executable when using `--symlink-install`, otherwise `ros2 run` cannot discover it.
 
 ## Task 7: Final Verification and Push
 
