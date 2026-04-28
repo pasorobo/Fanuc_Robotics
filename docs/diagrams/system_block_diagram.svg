@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="sans-serif" font-size="14">
+  <rect width="900" height="520" fill="white"/>
+  <text x="450" y="32" text-anchor="middle" font-size="18" font-weight="bold">CRX-10iA/L Workcell System Block Diagram</text>
+  <g stroke="#1f3a93" stroke-width="2" fill="#eaf0ff">
+    <rect x="40" y="80" width="220" height="120" rx="6"/>
+    <rect x="340" y="80" width="220" height="120" rx="6"/>
+    <rect x="640" y="80" width="220" height="120" rx="6"/>
+    <rect x="340" y="280" width="220" height="80" rx="6"/>
+    <rect x="40" y="280" width="220" height="80" rx="6"/>
+    <rect x="640" y="280" width="220" height="80" rx="6"/>
+  </g>
+  <g fill="#000">
+    <text x="150" y="110" text-anchor="middle" font-weight="bold">Linux PC</text>
+    <text x="150" y="135" text-anchor="middle" font-size="12">Ubuntu 22.04</text>
+    <text x="150" y="153" text-anchor="middle" font-size="12">ROS 2 Humble</text>
+    <text x="150" y="171" text-anchor="middle" font-size="12">MoveIt 2 / MTC</text>
+    <text x="150" y="189" text-anchor="middle" font-size="12">crx10ial_* packages</text>
+
+    <text x="450" y="110" text-anchor="middle" font-weight="bold">FANUC Controller</text>
+    <text x="450" y="135" text-anchor="middle" font-size="12">R-30iB Mini Plus</text>
+    <text x="450" y="153" text-anchor="middle" font-size="12">J519 Stream Motion</text>
+    <text x="450" y="171" text-anchor="middle" font-size="12">R912 Remote Motion</text>
+    <text x="450" y="189" text-anchor="middle" font-size="12">iRVision (optional)</text>
+
+    <text x="750" y="110" text-anchor="middle" font-weight="bold">CRX-10iA/L Robot</text>
+    <text x="750" y="135" text-anchor="middle" font-size="12">6 axes</text>
+    <text x="750" y="153" text-anchor="middle" font-size="12">Reach 1.249 m</text>
+    <text x="750" y="171" text-anchor="middle" font-size="12">Payload 10 kg</text>
+    <text x="750" y="189" text-anchor="middle" font-size="12">Tool flange</text>
+
+    <text x="150" y="305" text-anchor="middle" font-weight="bold">Teach Pendant</text>
+    <text x="150" y="328" text-anchor="middle" font-size="12">DCS, Safety, Operator UI</text>
+
+    <text x="450" y="305" text-anchor="middle" font-weight="bold">Gripper</text>
+    <text x="450" y="328" text-anchor="middle" font-size="12">Parallel jaw / vacuum</text>
+    <text x="450" y="346" text-anchor="middle" font-size="12">Driven by DO/DI</text>
+
+    <text x="750" y="305" text-anchor="middle" font-weight="bold">Camera</text>
+    <text x="750" y="328" text-anchor="middle" font-size="12">iRVision target</text>
+    <text x="750" y="346" text-anchor="middle" font-size="12">External RGB-D (future)</text>
+  </g>
+  <g stroke="#27ae60" stroke-width="2" fill="none" marker-end="url(#arrow2)">
+    <line x1="260" y1="140" x2="340" y2="140"/>
+    <line x1="560" y1="140" x2="640" y2="140"/>
+    <line x1="450" y1="200" x2="450" y2="280"/>
+    <line x1="450" y1="200" x2="150" y2="280"/>
+    <line x1="450" y1="200" x2="750" y2="280"/>
+  </g>
+  <g fill="#27ae60" font-size="12">
+    <text x="300" y="135">Ethernet</text>
+    <text x="600" y="135">cable</text>
+    <text x="465" y="245">DI/DO + iRVision</text>
+  </g>
+  <defs>
+    <marker id="arrow2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#27ae60"/>
+    </marker>
+  </defs>
+  <text x="450" y="490" text-anchor="middle" font-size="12" fill="#7f8c8d">ROS 2 is not safety-rated. Safety is owned by FANUC controller, DCS, and pendant.</text>
+</svg>
