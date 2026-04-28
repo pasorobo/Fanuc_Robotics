@@ -15,19 +15,9 @@ class BoxSpec:
 
 SCENE_BOXES: tuple[BoxSpec, ...] = (
     BoxSpec(
-        object_id="work_table",
-        dimensions=(1.0, 0.7, 0.04),
-        xyz=(0.75, 0.0, 0.70),
-    ),
-    BoxSpec(
         object_id="work_object",
         dimensions=(0.08, 0.08, 0.05),
         xyz=(0.55, 0.0, 0.745),
-    ),
-    BoxSpec(
-        object_id="camera_stand",
-        dimensions=(0.05, 0.05, 0.70),
-        xyz=(0.35, -0.55, 0.35),
     ),
 )
 

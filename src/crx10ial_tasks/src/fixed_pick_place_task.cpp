@@ -15,20 +15,17 @@
 #include <crx10ial_tasks/fixed_pick_place_task.hpp>
 
 #include <moveit/task_constructor/container.h>
-#include <moveit/task_constructor/solvers/cartesian_path.h>
 #include <moveit/task_constructor/solvers/pipeline_planner.h>
-#include <moveit/task_constructor/stages/connect.h>
 #include <moveit/task_constructor/stages/current_state.h>
 #include <moveit/task_constructor/stages/modify_planning_scene.h>
-#include <moveit/task_constructor/stages/move_relative.h>
 #include <moveit/task_constructor/stages/move_to.h>
 
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/vector3_stamped.hpp>
 
 namespace crx10ial_tasks
 {
@@ -46,16 +43,6 @@ geometry_msgs::msg::PoseStamped stamped_pose(
   geometry_msgs::msg::PoseStamped stamped;
   stamped.header.frame_id = frame_id;
   stamped.pose = pose;
-  return stamped;
-}
-
-geometry_msgs::msg::Vector3Stamped stamped_vector(
-  const std::string & frame_id,
-  const geometry_msgs::msg::Vector3 & vector)
-{
-  geometry_msgs::msg::Vector3Stamped stamped;
-  stamped.header.frame_id = frame_id;
-  stamped.vector = vector;
   return stamped;
 }
 
@@ -89,11 +76,6 @@ mtc::Task build_fixed_pick_place_task(
   auto sampling_planner = std::make_shared<solvers::PipelinePlanner>(node);
   sampling_planner->setProperty("goal_joint_tolerance", 1e-4);
 
-  auto cartesian_planner = std::make_shared<solvers::CartesianPath>();
-  cartesian_planner->setMaxVelocityScalingFactor(0.2);
-  cartesian_planner->setMaxAccelerationScalingFactor(0.2);
-  cartesian_planner->setStepSize(0.01);
-
   task.add(std::make_unique<stages::CurrentState>("current state"));
 
   const auto grasp_world_pose = compose_pose(config.object.pose, config.grasp.pose);
@@ -101,9 +83,18 @@ mtc::Task build_fixed_pick_place_task(
     grasp_world_pose,
     config.grasp.approach.direction,
     -config.grasp.approach.max_distance);
+  const auto retreat_pose = translated_pose(
+    grasp_world_pose,
+    config.grasp.retreat.direction,
+    config.grasp.retreat.max_distance);
+  const auto post_place_pose = translated_pose(
+    place_pose,
+    config.grasp.retreat.direction,
+    config.grasp.retreat.max_distance);
 
   {
     auto stage = std::make_unique<stages::MoveTo>("move to pregrasp pose", sampling_planner);
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
     stage->setGroup(config.arm_group_name);
     stage->setIKFrame(config.hand_frame);
     stage->setGoal(stamped_pose(config.object.frame_id, pregrasp_pose));
@@ -111,57 +102,45 @@ mtc::Task build_fixed_pick_place_task(
   }
 
   {
-    auto stage = std::make_unique<stages::MoveRelative>("approach object", cartesian_planner);
-    stage->properties().configureInitFrom(mtc::Stage::PARENT, {"group"});
-    stage->properties().set("link", config.hand_frame);
-    stage->setMinMaxDistance(
-      config.grasp.approach.min_distance,
-      config.grasp.approach.max_distance);
-    stage->setDirection(
-      stamped_vector(config.hand_frame, config.grasp.approach.direction));
+    auto stage = std::make_unique<stages::MoveTo>("approach object", sampling_planner);
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
+    stage->setGroup(config.arm_group_name);
+    stage->setIKFrame(config.hand_frame);
+    stage->setGoal(stamped_pose(config.object.frame_id, grasp_world_pose));
     task.add(std::move(stage));
   }
 
   {
     auto stage = std::make_unique<stages::ModifyPlanningScene>(
       "allow collision gripper object");
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
     stage->allowCollisions(
       config.object.id,
       std::vector<std::string>{
-        config.eef_name, "gripper_palm", "left_finger", "right_finger", config.hand_frame},
+        config.eef_name, "gripper_palm", "left_finger", "right_finger", config.hand_frame, "table"},
       true);
     task.add(std::move(stage));
   }
 
   {
     auto stage = std::make_unique<stages::ModifyPlanningScene>("internal attach object");
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
     stage->attachObject(config.object.id, config.hand_frame);
     task.add(std::move(stage));
   }
 
   {
-    auto stage = std::make_unique<stages::MoveRelative>("retreat with object", cartesian_planner);
-    stage->properties().configureInitFrom(mtc::Stage::PARENT, {"group"});
-    stage->properties().set("link", config.hand_frame);
-    stage->setMinMaxDistance(
-      config.grasp.retreat.min_distance,
-      config.grasp.retreat.max_distance);
-    stage->setDirection(
-      stamped_vector(config.hand_frame, config.grasp.retreat.direction));
-    task.add(std::move(stage));
-  }
-
-  {
-    auto stage = std::make_unique<stages::Connect>(
-      "move to place",
-      stages::Connect::GroupPlannerVector{{config.arm_group_name, sampling_planner}});
-    stage->setTimeout(config.planning.timeout_sec);
-    stage->properties().configureInitFrom(mtc::Stage::PARENT);
+    auto stage = std::make_unique<stages::MoveTo>("retreat with object", sampling_planner);
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
+    stage->setGroup(config.arm_group_name);
+    stage->setIKFrame(config.hand_frame);
+    stage->setGoal(stamped_pose(config.object.frame_id, retreat_pose));
     task.add(std::move(stage));
   }
 
   {
     auto stage = std::make_unique<stages::MoveTo>("move to place pose", sampling_planner);
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
     stage->setGroup(config.arm_group_name);
     stage->setIKFrame(config.hand_frame);
     stage->setGoal(stamped_pose(config.place.frame_id, place_pose));
@@ -170,23 +149,27 @@ mtc::Task build_fixed_pick_place_task(
 
   {
     auto stage = std::make_unique<stages::ModifyPlanningScene>("internal detach object");
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
     stage->detachObject(config.object.id, config.hand_frame);
     task.add(std::move(stage));
   }
 
   {
-    auto stage = std::make_unique<stages::MoveRelative>("retreat after place", cartesian_planner);
-    stage->properties().configureInitFrom(mtc::Stage::PARENT, {"group"});
-    stage->properties().set("link", config.hand_frame);
-    stage->setMinMaxDistance(
-      config.grasp.retreat.min_distance,
-      config.grasp.retreat.max_distance);
-    stage->setDirection(
-      stamped_vector(config.hand_frame, config.grasp.retreat.direction));
+    auto stage = std::make_unique<stages::MoveTo>("retreat after place", sampling_planner);
+    stage->restrictDirection(mtc::PropagatingEitherWay::FORWARD);
+    stage->setGroup(config.arm_group_name);
+    stage->setIKFrame(config.hand_frame);
+    stage->setGoal(stamped_pose(config.place.frame_id, post_place_pose));
     task.add(std::move(stage));
   }
 
-  task.init();
+  try {
+    task.init();
+  } catch (const mtc::InitStageException & exc) {
+    std::ostringstream error;
+    error << exc;
+    throw std::runtime_error("failed to initialize fixed pick/place MTC task: " + error.str());
+  }
   return task;
 }
 

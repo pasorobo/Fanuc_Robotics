@@ -12,31 +12,25 @@ from crx10ial_bringup.mock_scene_node import validate_publish_period
 def test_build_collision_objects_returns_expected_ids_and_frame():
     objects = build_collision_objects(frame_id="world")
 
-    assert [obj.id for obj in objects] == [
-        "work_table",
-        "work_object",
-        "camera_stand",
-    ]
+    assert [obj.id for obj in objects] == ["work_object"]
     assert all(obj.header.frame_id == "world" for obj in objects)
     assert all(obj.operation == CollisionObject.ADD for obj in objects)
 
 
-def test_work_table_dimensions_are_stable():
+def test_work_object_dimensions_are_stable():
     objects = {obj.id: obj for obj in build_collision_objects(frame_id="world")}
-    table = objects["work_table"]
+    work_object = objects["work_object"]
 
-    assert table.primitives[0].type == SolidPrimitive.BOX
-    assert list(table.primitives[0].dimensions) == [1.0, 0.7, 0.04]
-    assert table.primitive_poses[0].position.x == 0.75
-    assert table.primitive_poses[0].position.y == 0.0
-    assert table.primitive_poses[0].position.z == 0.70
+    assert work_object.primitives[0].type == SolidPrimitive.BOX
+    assert list(work_object.primitives[0].dimensions) == [0.08, 0.08, 0.05]
+    assert work_object.primitive_poses[0].position.x == 0.55
+    assert work_object.primitive_poses[0].position.y == 0.0
+    assert work_object.primitive_poses[0].position.z == 0.745
 
 
 def test_all_collision_objects_have_stable_geometry_and_identity_orientation():
     expected = {
-        "work_table": ((1.0, 0.7, 0.04), (0.75, 0.0, 0.70)),
         "work_object": ((0.08, 0.08, 0.05), (0.55, 0.0, 0.745)),
-        "camera_stand": ((0.05, 0.05, 0.70), (0.35, -0.55, 0.35)),
     }
     objects = {obj.id: obj for obj in build_collision_objects(frame_id="world")}
 

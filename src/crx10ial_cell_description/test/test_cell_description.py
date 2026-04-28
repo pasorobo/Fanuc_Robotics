@@ -46,7 +46,6 @@ def test_cell_xacro_expands_and_contains_static_workcell_links():
     assert "world" in links
     assert "base_link" in links
     assert "table" in links
-    assert "work_object" in links
     assert "camera_stand" in links
     assert "tool_link" in links
     assert "gripper_palm" in links
@@ -55,7 +54,6 @@ def test_cell_xacro_expands_and_contains_static_workcell_links():
     assert "grasp_link" in links
 
     assert "world_to_table" in joints
-    assert "table_to_work_object" in joints
     assert "world_to_camera_stand" in joints
     assert "end_effector_to_tool_link" in joints
     assert "tool_link_to_gripper_palm" in joints

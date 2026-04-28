@@ -40,22 +40,6 @@
     <origin xyz="0.75 0 0.70" rpy="0 0 0"/>
   </joint>
 
-  <link name="work_object">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry><box size="0.08 0.08 0.05"/></geometry>
-      <material name="mat_work_object_blue"><color rgba="0.1 0.35 0.85 1.0"/></material>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry><box size="0.08 0.08 0.05"/></geometry>
-    </collision>
-  </link>
-  <joint name="table_to_work_object" type="fixed">
-    <parent link="table"/><child link="work_object"/>
-    <origin xyz="-0.20 0 0.045" rpy="0 0 0"/>
-  </joint>
-
   <link name="camera_stand">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>

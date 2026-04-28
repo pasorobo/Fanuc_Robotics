@@ -10,7 +10,7 @@ fixed_pick_place:
     object.pose.xyz: [0.55, 0.0, 0.745]
     object.pose.rpy: [0.0, 0.0, 0.0]
     grasp.frame_id: grasp_link
-    grasp.pose.xyz: [0.0, 0.0, 0.0]
+    grasp.pose.xyz: [-0.10, 0.0, 0.255]
     grasp.pose.rpy: [0.0, 0.0, 0.0]
     grasp.approach.direction: [1.0, 0.0, 0.0]
     grasp.approach.min: 0.05
@@ -19,9 +19,9 @@ fixed_pick_place:
     grasp.retreat.min: 0.05
     grasp.retreat.max: 0.10
     place.frame_id: world
-    place.pose.xyz: [0.55, 0.20, 0.745]
+    place.pose.xyz: [0.45, 0.20, 1.00]
     place.pose.rpy: [0.0, 0.0, 0.0]
-    failure.place.pose.xyz: [2.00, 0.00, 0.745]
+    failure.place.pose.xyz: [2.00, 0.00, 1.00]
     failure.place.pose.rpy: [0.0, 0.0, 0.0]
     gripper.open_width_m: 0.08
     gripper.close_width_m: 0.02
