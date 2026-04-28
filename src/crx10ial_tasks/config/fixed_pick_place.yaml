@@ -1,0 +1,31 @@
+fixed_pick_place:
+  ros__parameters:
+    arm_group_name: manipulator
+    eef_name: tool_link
+    hand_frame: grasp_link
+    world_frame: world
+    object.id: work_object
+    object.frame_id: world
+    object.dimensions: [0.08, 0.08, 0.05]
+    object.pose.xyz: [0.55, 0.0, 0.745]
+    object.pose.rpy: [0.0, 0.0, 0.0]
+    grasp.frame_id: grasp_link
+    grasp.pose.xyz: [0.0, 0.0, 0.0]
+    grasp.pose.rpy: [0.0, 0.0, 0.0]
+    grasp.approach.direction: [1.0, 0.0, 0.0]
+    grasp.approach.min: 0.05
+    grasp.approach.max: 0.10
+    grasp.retreat.direction: [-1.0, 0.0, 0.0]
+    grasp.retreat.min: 0.05
+    grasp.retreat.max: 0.10
+    place.frame_id: world
+    place.pose.xyz: [0.55, 0.20, 0.745]
+    place.pose.rpy: [0.0, 0.0, 0.0]
+    failure.place.pose.xyz: [2.00, 0.00, 0.745]
+    failure.place.pose.rpy: [0.0, 0.0, 0.0]
+    gripper.open_width_m: 0.08
+    gripper.close_width_m: 0.02
+    gripper.close_force_n: 30.0
+    planning.max_solutions: 1
+    planning.timeout_sec: 10.0
+    execution.enabled: false
