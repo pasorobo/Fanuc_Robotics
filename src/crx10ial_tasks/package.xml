@@ -18,6 +18,11 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
 
+  <exec_depend>crx10ial_cell_description</exec_depend>
+  <exec_depend>fanuc_hardware_interface</exec_depend>
+  <exec_depend>fanuc_moveit_config</exec_depend>
+  <exec_depend>moveit_configs_utils</exec_depend>
+
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

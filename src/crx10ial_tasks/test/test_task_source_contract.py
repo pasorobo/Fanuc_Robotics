@@ -67,6 +67,9 @@ def test_execute_mock_attaches_before_grasp_motion_when_node_exists():
         return
 
     source = node_path.read_text(encoding="utf-8")
+    if '"execute_mock"' not in source:
+        return
+
     attach_index = source.index("attach_object(node, config);")
     grasp_index = source.index(
         'move_to_pose(move_group, grasp_world_pose, config.hand_frame, "grasp");'

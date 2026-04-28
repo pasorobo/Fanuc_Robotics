@@ -52,6 +52,15 @@ target_include_directories(fixed_pick_place_task PUBLIC
 target_link_libraries(fixed_pick_place_task fixed_pick_place_config)
 ament_target_dependencies(fixed_pick_place_task ${CONFIG_DEPS} ${MTC_DEPS})
 
+add_executable(fixed_pick_place
+  src/fixed_pick_place_node.cpp
+)
+target_link_libraries(fixed_pick_place
+  fixed_pick_place_config
+  fixed_pick_place_task
+)
+ament_target_dependencies(fixed_pick_place ${CONFIG_DEPS} ${MTC_DEPS})
+
 install(TARGETS fixed_pick_place_config
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
@@ -64,11 +73,18 @@ install(TARGETS fixed_pick_place_task
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
+install(TARGETS fixed_pick_place
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
 install(DIRECTORY include/
   DESTINATION include
 )
 
 install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
 
